@@ -2,7 +2,7 @@
 
 You can use the resources in this github to deploy an end-to-end data pipeline on your local computer using Docker containerized Kafka (data streaming), Cassandra (NoSQL database) and Jupyter Lab (data analysis Visualization).
 
-This is based on the repo https://github.com/salcaino/sfucmpt733/tree/main/foobar-kafka
+This bases on the repo https://github.com/salcaino/sfucmpt733/tree/main/foobar-kafka
 Substantial changes and bug fixes have been made. Tested on Windows 10. 
 
 # Quickstart instructions
@@ -28,16 +28,17 @@ Cassandra is setup so it runs keyspace and schema creation scripts at first setu
 $ docker-compose -f cassandra/docker-compose.yml --env-file .env up -d
 ```
 
-## Starting kafka on docker
+## Starting Kafka on Docker
 ```bash
 $ docker-compose -f kafka/docker-compose.yml --env-file .env up -d            # start single zookeeper, broker, kafka-manager and kafka-connect services
 $ docker ps -a                                                # sanity check to make sure services are up: kafka_broker_1, kafka-manager, zookeeper, kafka-connect service
 ```
 
 > **Note:** 
-Kafka front end is available at http://localhost:9000
+Kafka-Manager front end is available at http://localhost:9000
 
-> Kafka-Connect REST interface is available at http://localhost:8083
+You can use it to create cluster to view the topics streaming in Kafka.
+
 
 IMPORTANT: There is a bug that I don't know how to fix yet. You have to manually go to CLI of the "kafka-connect" container and run the below comment to start the Cassandra sinks.
 ```
