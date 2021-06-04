@@ -66,6 +66,9 @@ And that's it! you should be seeing records coming in to Cassandra. Feel free to
 
 
 ## Visualization
+
+Run the following command the go to http://localhost:8888 and run the visualization notebook accordingly
+
 ```
 docker-compose -f data-vis/docker-compose.yml --env-file .env up -d
 ```
@@ -75,6 +78,8 @@ docker-compose -f data-vis/docker-compose.yml --env-file .env up -d
 To stop all running kakfa cluster services
 
 ```bash
+$ docker-compose -f data-vis/docker-compose.yml down # stop visualization node
+
 $ docker-compose -f consumers/docker-compose.yml down          # stop the consumers
 
 $ docker-compose -f owm-producer/docker-compose.yml down       # stop open weather map producer
