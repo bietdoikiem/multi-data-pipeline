@@ -1,9 +1,20 @@
-# How to Build a Distributed Big Data Pipeline Using Kafka and Docker
+# How to Build a Distributed Big Data Pipeline Using Kafka, Cassandra, and Jupyter Lab with Docker
 
-This is based on the repo https://github.com/salcaino/sfucmpt733/tree/main/foobar-kafka.
+You can use the resources in this github to deploy an end-to-end data pipeline on your local computer using Docker containerized Kafka (data streaming), Cassandra (NoSQL database) and Jupyter Lab (data analysis Visualization).
+
+This is based on the repo https://github.com/salcaino/sfucmpt733/tree/main/foobar-kafka
 Substantial changes and bug fixes have been made. Tested on Windows 10. 
 
 # Quickstart instructions
+
+You need to apply for some APIs to use with this. The APIs might take days for application to be granted access. Sample API keys are given, but it can be blocked if too many users are running this.
+
+Twitter Developer API: https://developer.twitter.com/en/apply-for-access
+
+OpenWeatherMap API: https://openweathermap.org/api 
+
+After obtaining the API keys, please update the files  "twitter-producer/twitter_service.cfg" and "owm-producer/openweathermap_service.cfg" accordingly.
+
 
 #Create docker networks
 ```bash
