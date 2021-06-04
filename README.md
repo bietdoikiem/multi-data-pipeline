@@ -1,5 +1,7 @@
 # How to Build a Distributed Big Data Pipeline Using Kafka and Docker
 
+This is based on the repo https://github.com/salcaino/sfucmpt733/tree/main/foobar-kafka.
+Substantial changes and bug fixes have been made. Tested on Windows 10. 
 
 # Quickstart instructions
 
