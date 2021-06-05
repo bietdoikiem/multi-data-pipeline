@@ -9,7 +9,7 @@ from kafka import KafkaProducer
 
 KAFKA_BROKER_URL = os.environ.get("KAFKA_BROKER_URL")
 TOPIC_NAME = os.environ.get("TOPIC_NAME")
-SLEEP_TIME = 60
+SLEEP_TIME = int(os.environ.get("SLEEP_TIME", 60))
 
 config = configparser.ConfigParser()
 config.read('openweathermap_service.cfg')
