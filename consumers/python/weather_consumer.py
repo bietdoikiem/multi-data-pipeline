@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     path = os.path.dirname(os.path.realpath(__file__))
     parent = os.path.dirname(path) + "/data/"
-    # csvbackupfile = parent + "weather.csv"
+    csvbackupfile = parent + "weather.csv"
 
     print("Setting up Kafka consumer at {}".format(KAFKA_BROKER_URL))
     consumer = KafkaConsumer(TOPIC_NAME, bootstrap_servers=[KAFKA_BROKER_URL])

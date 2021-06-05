@@ -16,7 +16,7 @@ if __name__ == "__main__":
     cwd = parent + "/nltk_data"
     print("Set NLTK path to {}".format(cwd))
     nltk.data.path = [cwd]
-    # csvbackupfile = parent + "/data/" + "twitter.csv"
+    csvbackupfile = parent + "/data/" + "twitter.csv"
 
     TOPIC_NAME = os.environ.get("TOPIC_NAME")
     KAFKA_BROKER_URL = os.environ.get("KAFKA_BROKER_URL") if os.environ.get("KAFKA_BROKER_URL") else 'localhost:9092'
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         res = classifier.predict([target])
         classification = "Positive" if res == 1 else "Negative"
         dic = {"tweet" : target, "datetime" : timestamp.strftime('%Y-%m-%d %H:%M:%S'), "location" : location, "classification" : classification}
-        # df = pd.DataFrame([dic])
+        df = pd.DataFrame([dic])
         # saveTwitterDf(df,CASSANDRA_HOST, CASSANDRA_KEYSPACE)
         # print("Saved to CSV")
         # df.to_csv(csvbackupfile, mode='a', header=False, index=False)
