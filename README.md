@@ -25,12 +25,12 @@ $ docker network create cassandra-network                     # create a new doc
 
 Cassandra is setup so it runs keyspace and schema creation scripts at first setup so it is ready to use.
 ```bash
-$ docker-compose -f cassandra/docker-compose.yml --env-file .env up -d
+$ docker-compose -f cassandra/docker-compose.yml up -d
 ```
 
 ## Starting Kafka on Docker
 ```bash
-$ docker-compose -f kafka/docker-compose.yml --env-file .env up -d            # start single zookeeper, broker, kafka-manager and kafka-connect services
+$ docker-compose -f kafka/docker-compose.yml up -d            # start single zookeeper, broker, kafka-manager and kafka-connect services
 $ docker ps -a                                                # sanity check to make sure services are up: kafka_broker_1, kafka-manager, zookeeper, kafka-connect service
 ```
 
@@ -47,14 +47,23 @@ IMPORTANT: There is a bug that I don't know how to fix yet. You have to manually
 
 ## Starting Producers
 ```bash
-$ docker-compose -f owm-producer/docker-compose.yml --env-file .env up -d     # start the producer that retrieves open weather map
-$ docker-compose -f twitter-producer/docker-compose.yml --env-file .env up -d # start the producer for twitter
+$ docker-compose -f owm-producer/docker-compose.yml up -d     # start the producer that retrieves open weather map
+$ docker-compose -f twitter-producer/docker-compose.yml up # start the producer for twitter
 ```
+
+There is a known issue with reading the tweets and the bug fix will be releashed in Tweetpy 4.0 (details here: https://github.com/tweepy/tweepy/issues/237). Therefore, with the Twitter producer, we will attach the bash to monitor the log to see the magic and retry if the service is stopped. 
+
 ## Starting Twitter classifier (plus Weather consumer)
 
-Start consumers:
+There is another catch: We cannot build the Docker file for the consumer directly with the docker-compose.yml (We can do so with all other yml files, just not this one -.-). So we have to manually go inside the folder "consumers" to build the Docker using command:
+
 ```bash
-$ docker-compose -f consumers/docker-compose.yml --env-file .env up -d        # start the consumers
+$ docker build -t twitterconsumer .        # start the consumers
+```
+
+Then go back up 1 level with "cd .." and we can start consumers:
+```bash
+$ docker-compose -f consumers/docker-compose.yml up       # start the consumers
 ```
 
 ## Check that data is arriving to Cassandra
@@ -82,7 +91,7 @@ And that's it! you should be seeing records coming in to Cassandra. Feel free to
 Run the following command the go to http://localhost:8888 and run the visualization notebook accordingly
 
 ```
-docker-compose -f data-vis/docker-compose.yml --env-file .env up -d
+docker-compose -f data-vis/docker-compose.yml up -d
 ```
 
 ## Teardown
@@ -110,6 +119,14 @@ $ docker network rm kafka-network
 $ docker network rm cassandra-network
 ```
 
+To remove resources in Docker
 
+```bash
+$ docker container prune # remove stopped containers, done with the docker-compose down
+$ docker volume prune # remove all dangling volumes (delete all data from your Kafka and Cassandra)
+$ docker image prune -a # remove all images (help with rebuild images)
+$ docker builder prune # remove all build cache (you have to pull data again in the next build)
+$ docker system prune -a # basically remove everything
+```
 
 

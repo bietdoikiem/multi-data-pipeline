@@ -26,7 +26,7 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_MESSAGE_MAX_BYTES: 2000000
       # Create topic, with 1 partition, 1 replica
-      KAFKA_CREATE_TOPICS: "${TWEET_TOPIC}:1:1,${WEATHER_TOPIC}:1:1,${TWITTER_SINK_TOPIC}:1:1"
+      KAFKA_CREATE_TOPICS: "twitter:1:1,weather:1:1,twittersink:1:1"
 
   kafka_manager:
     image: hlebalbau/kafka-manager:stable
@@ -41,7 +41,7 @@ services:
       APPLICATION_SECRET: "random-secret"
       KAFKA_MANAGER_AUTH_ENABLED: "true"
       KAFKA_MANAGER_USERNAME: admin
-      KAFKA_MANAGER_PASSWORD: smellycat
+      KAFKA_MANAGER_PASSWORD: bigbang
     command: -Dpidfile.path=/dev/null
   connect:
     build:

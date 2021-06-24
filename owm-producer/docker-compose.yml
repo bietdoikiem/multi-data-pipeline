@@ -6,8 +6,8 @@ services:
     build: .
     environment:
       KAFKA_BROKER_URL: broker:9092
-      TOPIC_NAME: "${WEATHER_TOPIC}"
-      SLEEP_TIME: ${WEATHER_SLEEP_TIME}
+      TOPIC_NAME: weather
+      SLEEP_TIME: 60
 
 networks:
   default:

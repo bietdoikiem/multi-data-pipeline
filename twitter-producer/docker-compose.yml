@@ -6,8 +6,8 @@ services:
     build: .
     environment:
       KAFKA_BROKER_URL: broker:9092
-      TOPIC_NAME: ${TWEET_TOPIC}
-      BATCH_SIZE: ${TWEET_BATCH_SIZE}
+      TOPIC_NAME: twitter
+      BATCH_SIZE: 10
 
 networks:
   default:
