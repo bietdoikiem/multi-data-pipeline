@@ -10,6 +10,7 @@ ENV CONNECT_PLUGIN_PATH="/usr/share/java,/datastax-connector/kafka-connect-cassa
 WORKDIR /usr/app
 
 COPY connect/ .
+USER root
 RUN chmod +x *.sh
 
 CMD [ "/bin/bash", "-c", "echo \"Launching Kafka Connect worker\" & \
