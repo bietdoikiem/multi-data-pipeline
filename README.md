@@ -112,6 +112,8 @@ $ docker-compose -f kafka/docker-compose.yml down              # stop zookeeper,
 $ docker-compose -f cassandra/docker-compose.yml down          # stop Cassandra
 ```
 
+!IMPORTANT!: These commands are for your reference, please don't do it as we don't want to spend time downloading resources again in the next tutorial.
+
 To remove the kafka-network network:
 
 ```bash
