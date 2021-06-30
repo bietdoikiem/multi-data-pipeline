@@ -50,9 +50,7 @@ cqlsh:kafkapipeline> select * from fakerdata;
 
 2. Setting up Kafka Connect
 
-In the folder "kafka", rename the folder "connect" to "connect-faker". Add "-faker" to both filenames in this folder for the Dockerfile to notice the changes.
-
-Add this to the "connect-faker/create-cassandra-sink-faker.sh"
+In the folder "kafka", add this to the "connect/create-cassandra-sink.sh"
 
 ```
 
@@ -78,8 +76,6 @@ curl -s \
 }'
 echo "Done."
 ```
-
-Edit the "connect-faker/start-and-wait-faker.sh" to reflect the new file name. Add "-faker" to "Dockerfile-connect" line 12 and 17 accordingly.
 
 Now, rebuild the docker container kafka with the tag --build
 
