@@ -4,6 +4,7 @@ The full solution is here
 
 https://github.com/vnyennhi/docker-kafka-cassandra-faker-api
 
+Note: if the tag "--build" not helping, add another tag "--force-recreate"
 
 1.  Setting up Cassandra
 
@@ -12,6 +13,7 @@ Look at "faker-api/data.py", we can see the script to generate the fake data. We
 Add these to a new schema file "cassandra/schema-faker.cql"
 
 ```
+USE kafkapipeline;
 CREATE TABLE IF NOT EXISTS fakerdata (
   name TEXT,
   address TEXT,
@@ -92,7 +94,7 @@ Duplicate the "own-producer" folder to get us some guiding code, rename it to "f
 3.1. "faker-producer.py": 
 - delete line 14-30 and 45-52
 - add all from "faker-api/data.py" in
-- update the file to maker to make program run correctly
+- update the file to make the program run correctly
 - remove dataprep package
 - here is the complete code for you reference:
 
@@ -230,5 +232,12 @@ FAKER_TABLE: fakerdata
 - Copy the new "data-vis/python/cassandrautils.py" from the solution GitHub repo (I updated too many things to remember. Plus this is in Python now, you should be able to debug them YOURSELF on Jupyter Lab later)
 
 https://github.com/vnyennhi/docker-kafka-cassandra-faker-api
+
+To put up the data-vis container
+
+```
+docker-compose -f data-vis/docker-compose.yml up -d
+```
+
 
 7. Follow the solution GitHub repo instruction for tear down.

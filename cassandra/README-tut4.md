@@ -52,12 +52,12 @@ UPDATE cycling.cyclist_teams SET teams[2009] = 'Team DSB - Ballast Nedam' WHERE 
 
 Delete 1 item from the map
 ```
-DELETE teams[2009] FROM cycling.cyclist_teams WHERE id=e7cd5752-bc0d-4157-a80f-7523add8dbcd;
+DELETE teams[2009] FROM cycling.cyclist_teams WHERE id=5b6962dd-3f90-4c93-8f61-eabfa4a803e2;
 ```
 
 Delete multiple items from the map
 ```
-UPDATE cycling.cyclist_teams SET teams = teams - {'2013','2014'} WHERE id=e7cd5752-bc0d-4157-a80f-7523add8dbcd;
+UPDATE cycling.cyclist_teams SET teams = teams - {'2013','2014'} WHERE id=5b6962dd-3f90-4c93-8f61-eabfa4a803e2;
 ```
 
 ## More on other data types: set, list, tuples or user defined type
