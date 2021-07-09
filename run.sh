@@ -64,9 +64,9 @@ fi
 
 # -- Data visualization container
 echo "Do you want to start Data Visualization container? (y/n)"
-read -r VIZ_OPTION
+read -r VIS_OPTION
 
-if [ "$VIZ_OPTION" == "y" ]
+if [ "$VIS_OPTION" == "y" ]
 then
   echo "Initializing Data-Vis service..."
   docker-compose -f data-vis/docker-compose.yml up -d
