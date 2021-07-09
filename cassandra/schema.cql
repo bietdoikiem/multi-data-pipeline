@@ -21,3 +21,4 @@ CREATE TABLE twitterdata (
   classification TEXT,
   PRIMARY KEY (location, tweet_date)
 );
+

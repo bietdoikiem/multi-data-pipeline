@@ -4,8 +4,10 @@ from datetime import datetime
 import tweepy
 from kafka import KafkaProducer
 import configparser
+from urllib3.exceptions import ProtocolError
 
-TWIITER_API_GEOBOX_FILTER = [-123.371556, 49.009125, -122.264683, 49.375294]
+
+TWIITER_API_GEOBOX_FILTER = [-0.853907,51.105205,0.958128,   52.092674 ] # 52.092674, -0.853907, 51.105205, 0.958128,
 TWITTER_API_LANGS_FILTER = ['en']
 
 # Twitter API Keys
@@ -26,7 +28,7 @@ TOPIC_NAME = os.environ.get("TOPIC_NAME") if os.environ.get(
 
 # a static location is used for now as a
 # geolocation filter is imposed on twitter API
-TWEET_LOCATION = 'MetroVancouver'
+TWEET_LOCATION = 'London'
 
 
 class stream_listener(tweepy.StreamListener):
@@ -46,7 +48,7 @@ class stream_listener(tweepy.StreamListener):
             'datetime': datetime.utcnow().timestamp(),
             'location': TWEET_LOCATION
         }
-        print(tweet)
+        print(tweet + " " + TWEET_LOCATION)
 
         self.producer.send(TOPIC_NAME, value=twitter_df)
         self.producer.flush()
@@ -74,5 +76,12 @@ class twitter_stream():
 
 
 if __name__ == '__main__':
-    ts = twitter_stream()
-    ts.twitter_listener()
+  ts = twitter_stream()
+  while True:
+    try:
+      print("Twitter streaming started...")
+      ts.twitter_listener()
+    except ProtocolError as e:
+      print(str(e))
+      # Keep reconnecting and keep chunking
+      continue

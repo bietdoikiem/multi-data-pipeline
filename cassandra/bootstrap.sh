@@ -31,6 +31,10 @@ if [ "$1" = 'dse' -a "$2" = 'cassandra' ]; then
     echo '=> Ensuring schema is created'
     cqlsh -f /opt/scripts/schema.cql -k kafkapipeline 127.0.0.1 9042
 
+    # Create the faker schema if necessary
+    echo '=> Ensuring faker schema is created'
+    cqlsh -f /opt/scripts/schema-faker.cql -k kafkapipeline 127.0.0.1 9042
+
     # Shutdown Cassandra after bootstrapping to allow the entrypoint script to start normally
     echo '=> Shutting down Cassandra after bootstrapping'
     kill -s TERM "$dse_pid"

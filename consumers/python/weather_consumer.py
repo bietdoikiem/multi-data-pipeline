@@ -26,6 +26,7 @@ if __name__ == "__main__":
         # print('got one!')
         msg = msg.value.decode('ascii')
         jsonData=json.loads(msg)
+        print(jsonData)
         # df = pd.DataFrame([jsonData])
         # print("Saving {} new report".format(df.shape[0]))
         # saveWeatherreport(df,CASSANDRA_HOST, CASSANDRA_KEYSPACE)

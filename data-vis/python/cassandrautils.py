@@ -14,8 +14,9 @@ twittertable = os.getenv("twittertable.table", "twitterdata")
 CASSANDRA_HOST = os.environ.get("CASSANDRA_HOST") if os.environ.get("CASSANDRA_HOST") else 'localhost'
 CASSANDRA_KEYSPACE = os.environ.get("CASSANDRA_KEYSPACE") if os.environ.get("CASSANDRA_KEYSPACE") else 'kafkapipeline'
 
-WEATHER_TABLE = os.environ.get("WEATHER_TABLE") if os.environ.get("WEATHER_TABLE") else 'weather'
-TWITTER_TABLE = os.environ.get("TWITTER_TABLE") if os.environ.get("TWITTER_TABLE") else 'twitter'
+WEATHER_TABLE = os.environ.get("WEATHER_TABLE") if os.environ.get("WEATHER_TABLE") else 'weatherreport'
+TWITTER_TABLE = os.environ.get("TWITTER_TABLE") if os.environ.get("TWITTER_TABLE") else 'twitterdata'
+TWITTER_TABLE = os.environ.get("FAKER_TABLE") if os.environ.get("TWITTER_TABLE") else 'fakerdata'
 
 def saveTwitterDf(dfrecords):
     if isinstance(CASSANDRA_HOST, list):

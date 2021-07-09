@@ -1,10 +1,9 @@
 FROM python:3.8
 
-WORKDIR /app
+WORKDIR /usr/app
 
 ADD ./requirements.txt ./
 RUN pip install -r requirements.txt
-
 ADD ./ ./
 
-CMD ["python3", "-u", "twitter_api.py"]
+CMD ["python3", "-u", "faker_producer.py"]

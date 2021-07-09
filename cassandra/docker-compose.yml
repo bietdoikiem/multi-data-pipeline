@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   cassandradb:
@@ -9,7 +9,10 @@ services:
       - 7000:7000
       - 9042:9042
     volumes:
-      - $PWD/cassandra/data:/var/lib/cassandra
+      - cassdata:/var/lib/cassandra
+volumes:
+  cassdata:
+
 networks:
   default:
     external:
