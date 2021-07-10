@@ -9,6 +9,7 @@ ENV CONNECT_PLUGIN_PATH="/usr/share/java,/datastax-connector/kafka-connect-cassa
 
 WORKDIR /usr/app
 
+# Execute sink connector
 COPY connect/ .
 USER root
 RUN chmod +x *.sh

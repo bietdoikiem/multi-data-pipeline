@@ -3,7 +3,7 @@ version: "3"
 services:
   tweetconsumer:
     container_name: twitterconsumer
-    image: twitterconsumer
+    image: consumer
     build: .
     environment:
       KAFKA_BROKER_URL: broker:9092

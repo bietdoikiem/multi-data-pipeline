@@ -1,7 +1,6 @@
 version: "3"
 
 services:
-
   zookeeper:
     image: zookeeper
     restart: always
@@ -46,7 +45,7 @@ services:
   connect:
     build:
       context: .
-      dockerfile: Dockerfile-connect
+      dockerfile: connect.Dockerfile
     hostname: kafka-connect
     container_name: kafka-connect
     depends_on:
@@ -58,7 +57,7 @@ services:
       - default
       - secondary
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: 'broker:9092'
+      CONNECT_BOOTSTRAP_SERVERS: "broker:9092"
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
       CONNECT_REST_PORT: 8083
       CONNECT_GROUP_ID: kafka-connect-group
@@ -74,7 +73,7 @@ services:
       CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
       CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      CONNECT_ZOOKEEPER_CONNECT: "zookeeper:2181"
 
 networks:
   default:
