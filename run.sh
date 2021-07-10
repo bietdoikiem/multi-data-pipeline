@@ -1,6 +1,7 @@
 #!/bin/bash
 
-start_docker_compose() {
+# Start process
+start() {
   #! Initialize network
   echo "Do you want to create the required networks? (y/n)"
   read -r NETWORK_OPTION
@@ -77,9 +78,10 @@ start_docker_compose() {
   echo "Done."
 }
 
-build_optional() {
+# Build images processs
+build() {
   # Cassandra
-  echo "Do you want to build the image for bootstrapcassandra? (y/n)"
+  echo -n "Do you want to build the image for bootstrapcassandra? (y/n) > "
   read -r CASS_OPTION
 
   if [ "$CASS_OPTION" == "y" ]
@@ -88,7 +90,7 @@ build_optional() {
   fi
 
   # kafka_connect
-  echo "Do you want to build the image for kafka_connect? (y/n)"
+  echo -n "Do you want to build the image for kafka_connect? (y/n) > "
   read -r KAFKA_OPTION
 
   if [ "$KAFKA_OPTION" == "y" ]
@@ -97,7 +99,7 @@ build_optional() {
   fi
 
   # owm-producer_openweathermap
-  echo "Do you want to build the image for owm-producer_openweathermap? (y/n)"
+  echo -n "Do you want to build the image for owm-producer_openweathermap? (y/n) > "
   read -r OWM_OPTION
 
   if [ "$OWM_OPTION" == "y" ]
@@ -106,7 +108,7 @@ build_optional() {
   fi
 
   # twitter-producer_twitter_service
-  echo "Do you want to build the image for twitter-producer_twitter_service? (y/n)"
+  echo -n "Do you want to build the image for twitter-producer_twitter_service? (y/n) > "
   read -r TWITTER_OPTION
 
   if [ "$TWITTER_OPTION" == "y" ]
@@ -115,46 +117,65 @@ build_optional() {
   fi
 
   # faker-producer_faker
-  echo "Do you want to build the image for faker-producer_faker? (y/n)"
+  echo -n "Do you want to build the image for faker-producer_faker? (y/n) > "
   read -r FAKER_OPTION
 
   if [ "$FAKER_OPTION" == "y" ]
   then
     docker build -f faker-producer/Dockerfile -t faker-producer_faker:latest ./faker-producer
   fi
-
-  # faker-producer_faker
-  echo "Do you want to build the image for faker-producer_faker? (y/n)"
-  read -r FAKER_OPTION
-
-  if [ "$FAKER_OPTION" == "y" ]
-  then
-    docker build -f faker-producer/Dockerfile -t faker-producer_faker:latest ./faker-producer
-  fi
-
   
   # twitterconsumer
-  echo "Do you want to build the image for consumer? (y/n)"
-  read -r FAKER_OPTION
+  echo -n "Do you want to build the image for consumer? (y/n) > "
+  read -r CONSUMER_OPTION
 
-  if [ "$FAKER_OPTION" == "y" ]
+  if [ "$CONSUMER_OPTION" == "y" ]
   then
     docker build -f consumers/Dockerfile -t consumer:latest ./consumers
   fi
 
   # data-vis
-  
+  echo -n "Do you want to build the image for datavis? (y/n) > "
+  read -r VIS_OPTION
 
+  if [ "$VIS_OPTION" == "y" ]
+  then
+    docker build -f data-vis/Dockerfile -t datavis:laterst ./data-vis
+  fi
+
+  # Cleaning up dangling images after build
+  echo "Cleaning up dangling images after build..."
+  docker image prune
+  echo "Build DONE."
+}
+
+# Clean process
+clean() {
+  docker stop "$(docker ps -a -q)"
+  docker rm "$(docker ps -a -q)"
+  docker container prune
+  docker volume prune
+  echo "Clean DONE."
 }
 
 execute() {
   local task=${1}
   case "${task}" in
     start)
-      start_docker_compose
+      start
+      ;;
+    build)
+      build
+      ;;
+    clean)
+      clean
+      ;;
+    *)
+      err "invalid task: ${task}"
+      usage
+      exit 1
       ;;
   esac
-
 }
 
 err() {
@@ -162,7 +183,7 @@ err() {
 }
 
 usage() {
-    err "$(basename "$0"): [build|start|clean]"
+    err "$(basename "$0"): [start|build|clean]"
 }
 
 
