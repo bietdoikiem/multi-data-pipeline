@@ -57,10 +57,7 @@ curl -s \
     "topics": "faker",
     "contactPoints": "cassandradb",
     "loadBalancing.localDc": "datacenter1",
-    "topic.faker.kafkapipeline.fakerdata.mapping": "username=value.username, name=value.name, address=value.address,
-                                                    year=value.year, company=value.company, email=value.email,
-                                                    job=value.job, phone_number=value.phone_number, license_plate=value.license_plate, 
-                                                    image_url=value.image_url",
+    "topic.faker.kafkapipeline.fakerdata.mapping": "username=value.username, name=value.name, address=value.address, year=value.year, company=value.company, email=value.email, job=value.job, phone_number=value.phone_number, license_plate=value.license_plate, image_url=value.image_url",
     "topic.faker.kafkapipeline.fakerdata.consistencyLevel": "LOCAL_QUORUM"
   }
 }'
