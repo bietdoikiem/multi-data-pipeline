@@ -139,8 +139,12 @@ build_optional() {
 
   if [ "$FAKER_OPTION" == "y" ]
   then
-    docker build -f faker-producer/Dockerfile -t faker-producer_faker:latest ./faker-producer
+    docker build -f consumers/Dockerfile -t consumer:latest ./consumers
   fi
+
+  # data-vis
+  
+
 }
 
 execute() {

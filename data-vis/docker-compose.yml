@@ -4,8 +4,8 @@ services:
   datavis:
     container_name: datavis
     hostname: datavis
-    build:
-      context: .
+    image: datavis
+    build: .
     environment:
       CASSANDRA_HOST: cassandradb
       CASSANDRA_KEYSPACE: kafkapipeline

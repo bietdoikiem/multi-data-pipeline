@@ -13,7 +13,7 @@ services:
       BATCH_SIZE: 10
   weatherconsumer:
     container_name: weatherconsumer
-    image: twitterconsumer
+    image: consumer
     environment:
       KAFKA_BROKER_URL: broker:9092
       TOPIC_NAME: weather
@@ -22,7 +22,7 @@ services:
     command: ["python", "-u", "python/weather_consumer.py"]
   fakerconsumer:
     container_name: fakerconsumer
-    image: twitterconsumer
+    image: consumer
     environment:
       KAFKA_BROKER_URL: broker:9092
       TOPIC_NAME: faker
