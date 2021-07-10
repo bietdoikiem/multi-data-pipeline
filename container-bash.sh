@@ -1,6 +1,6 @@
 #!/bin/bash -i
 
-echo -n "Which container do you want to access? >"
+echo -n "Which container do you want to access? > "
 read -r CONTAINER
 
 echo "Accessing $CONTAINER container..."
