@@ -6,7 +6,7 @@ read -r CONTAINER
 echo "Accessing $CONTAINER container..."
 if [ "$CONTAINER" == "cassandra" ]
 then
-  echo -n "Do you want to access CQLSH? (y/n) > "
+  echo -n "Do you want to access CQLSH? (y/N) > "
   read -r CQLSH_OPTION
   if [ "$CQLSH_OPTION" == "y" ]
   then

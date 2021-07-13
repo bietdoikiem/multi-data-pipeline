@@ -3,7 +3,7 @@
 # Start process
 start() {
   #! Initialize network
-  echo "Do you want to create the required networks? (y/n)"
+  echo "Do you want to create the required networks? (y/N)"
   read -r NETWORK_OPTION
 
   if [ "$NETWORK_OPTION" == "y" ]
@@ -15,88 +15,86 @@ start() {
   # -- Run Cassandra container
   echo "Setting up Cassandra service... ⏳︎"
   docker-compose -f cassandra/docker-compose.yml up -d
-  sleep 6
-  echo "Cassandra launched! ✅"
+  progress-bar 5
+  echo "=> Cassandra launched! ✅"
 
   # -- Run Kafka container
   echo "Setting up Kafka services... ⏳︎"
   docker-compose -f kafka/docker-compose.yml up -d
-  sleep 5
-  echo "Kafka launched! ✅"
+  progress-bar 5
+  echo "=> Kafka launched! ✅"
 
   # Manually activate kafka-connect ./start-and-wait.sh script
   # echo "Loading kafka-connect start-and-wait script..."
 
   # -- Producers initialization of containers
   # OpenWeatherMap API
-  echo -n "Do you want to start OpenWeatherMap Producer? (y/n) > "
+  echo -n "Do you want to start OpenWeatherMap Producer? (y/N) > "
   read -r OWM_OPTION
 
   if [ "$OWM_OPTION" == "y" ]
   then
-    echo "Initializing OpenWeatherMap producer service..."
+    echo "Initializing OpenWeatherMap producer service... ⏳︎"
     docker-compose -f owm-producer/docker-compose.yml up -d
-    echo "OWM service launched! ✅"
+    echo "=> OWM service launched! ✅"
   fi
 
   # Twitter API
-  echo -n "Do you want to start Twitter Producer? (y/n) > "
+  echo -n "Do you want to start Twitter Producer? (y/N) > "
   read -r TWITTER_OPTION
 
   if [ "$TWITTER_OPTION" == "y" ]
   then
-    echo "Initializing Twitter producer service..."
+    echo "Initializing Twitter producer service... ⏳︎"
     docker-compose -f twitter-producer/docker-compose.yml up -d
-    echo "Twitter service launched! ✅"
+    echo "=> Twitter service launched! ✅"
   fi
 
   # Faker API
-  echo -n "Do you want to start Faker Producer? (y/n) > "
+  echo -n "Do you want to start Faker Producer? (y/N) > "
   read -r FAKER_OPTION
 
   if [ "$FAKER_OPTION" == "y" ]
   then
-    echo "Initializing Faker producer service..."
+    echo "Initializing Faker producer service... ⏳︎"
     docker-compose -f faker-producer/docker-compose.yml up -d
-    echo "Faker service launched! ✅"
+    echo "=> Faker service launched! ✅"
   fi
 
     # Faker API
-  echo -n "Do you want to start Kraken Producer? (y/n) > "
+  echo -n "Do you want to start Kraken Producer? (y/N) > "
   read -r KRAKEN_OPTION
 
   if [ "$KRAKEN_OPTION" == "y" ]
   then
-    echo "Initializing Kraken producer service..."
+    echo "Initializing Kraken producer service... ⏳︎"
     docker-compose -f kraken-producer/docker-compose.yml up -d
-    echo "Kraken service launched! ✅"
+    echo "=> Kraken service launched! ✅"
   fi
 
 
   # -- Run consumer containers
-  echo -n "Do you want to start Consumer containers? (y/n) > "
+  echo -n "Do you want to start Consumer containers? (y/N) > "
   read -r CONSUMER_OPTION
 
   if [ "$CONSUMER_OPTION" == "y" ]
   then
-    echo "Initializing consumer services..."
+    echo "Initializing consumer services... ⏳︎"
     docker-compose -f consumers/docker-compose.yml up -d
-    echo "Consumer services launched! ✅"
+    echo "=> Consumer services launched! ✅"
   fi
 
   # -- Data visualization container
-  echo -n "Do you want to start Data Visualization container? (y/n) > "
+  echo -n "Do you want to start Data Visualization container? (y/N) > "
   read -r VIS_OPTION
 
   if [ "$VIS_OPTION" == "y" ]
   then
-    echo "Initializing Data-Vis service..."
+    echo "Initializing Data-Vis service... ⏳︎"
     docker-compose -f data-vis/docker-compose.yml up -d
-    echo "Data-vis service launched! ✅"
+    echo "=> Data-vis service launched! ✅"
   fi
 
-  # echo "Waiting and Creating Sink services for Cassandra... ⏳︎"
-  # sleep 5
   # docker exec -d kafka-connect "./start-and-wait.sh"
   echo "Done."
 }
@@ -104,7 +102,7 @@ start() {
 # Build images processs
 build() {
   # Cassandra
-  echo -n "Do you want to build the image for bootstrapcassandra? (y/n) > "
+  echo -n "Do you want to build the image for bootstrapcassandra? (y/N) > "
   read -r CASS_OPTION
 
   if [ "$CASS_OPTION" == "y" ]
@@ -113,7 +111,7 @@ build() {
   fi
 
   # kafka_connect
-  echo -n "Do you want to build the image for kafka_connect? (y/n) > "
+  echo -n "Do you want to build the image for kafka_connect? (y/N) > "
   read -r KAFKA_OPTION
 
   if [ "$KAFKA_OPTION" == "y" ]
@@ -122,7 +120,7 @@ build() {
   fi
 
   # owm-producer_openweathermap
-  echo -n "Do you want to build the image for owm-producer_openweathermap? (y/n) > "
+  echo -n "Do you want to build the image for owm-producer_openweathermap? (y/N) > "
   read -r OWM_OPTION
 
   if [ "$OWM_OPTION" == "y" ]
@@ -131,7 +129,7 @@ build() {
   fi
 
   # twitter-producer_twitter_service
-  echo -n "Do you want to build the image for twitter-producer_twitter_service? (y/n) > "
+  echo -n "Do you want to build the image for twitter-producer_twitter_service? (y/N) > "
   read -r TWITTER_OPTION
 
   if [ "$TWITTER_OPTION" == "y" ]
@@ -140,7 +138,16 @@ build() {
   fi
 
   # faker-producer_faker
-  echo -n "Do you want to build the image for faker-producer_faker? (y/n) > "
+  echo -n "Do you want to build the image for faker-producer_faker? (y/N) > "
+  read -r KRAKEN_OPTION
+
+  if [ "$KRAKEN_OPTION" == "y" ]
+  then
+    docker build -f kraken-producer/Dockerfile -t kraken-producer_kraken:latest ./kraken-producer
+  fi
+
+    # faker-producer_faker
+  echo -n "Do you want to build the image for kraken-producer_kraken? (y/N) > "
   read -r FAKER_OPTION
 
   if [ "$FAKER_OPTION" == "y" ]
@@ -149,7 +156,7 @@ build() {
   fi
   
   # twitterconsumer
-  echo -n "Do you want to build the image for consumer? (y/n) > "
+  echo -n "Do you want to build the image for consumer? (y/N) > "
   read -r CONSUMER_OPTION
 
   if [ "$CONSUMER_OPTION" == "y" ]
@@ -158,7 +165,7 @@ build() {
   fi
 
   # data-vis
-  echo -n "Do you want to build the image for datavis? (y/n) > "
+  echo -n "Do you want to build the image for datavis? (y/N) > "
   read -r VIS_OPTION
 
   if [ "$VIS_OPTION" == "y" ]
@@ -211,6 +218,9 @@ usage() {
     err "$(basename "$0"): [start|build|clean]"
 }
 
+# import progress-bar function
+# shellcheck disable=SC1091
+source ./progress-bar.sh
 
 main() {
   if [ $# -ne 1 ]
