@@ -13,15 +13,19 @@ start() {
   fi
 
   # -- Run Cassandra container
+  echo "Setting up Cassandra service... ⏳︎"
   docker-compose -f cassandra/docker-compose.yml up -d
+  sleep 6
+  echo "Cassandra launched! ✅"
 
   # -- Run Kafka container
-  echo "Cassandra launched!"
+  echo "Setting up Kafka services... ⏳︎"
   docker-compose -f kafka/docker-compose.yml up -d
+  sleep 5
+  echo "Kafka launched! ✅"
 
   # Manually activate kafka-connect ./start-and-wait.sh script
-  echo "Loading kafka-connect start-and-wait script..."
-  docker exec -d kafka-connect "./start-and-wait.sh"
+  # echo "Loading kafka-connect start-and-wait script..."
 
   # -- Producers initialization of containers
   # OpenWeatherMap API
@@ -32,6 +36,7 @@ start() {
   then
     echo "Initializing OpenWeatherMap producer service..."
     docker-compose -f owm-producer/docker-compose.yml up -d
+    echo "OWM service launched! ✅"
   fi
 
   # Twitter API
@@ -42,6 +47,7 @@ start() {
   then
     echo "Initializing Twitter producer service..."
     docker-compose -f twitter-producer/docker-compose.yml up -d
+    echo "Twitter service launched! ✅"
   fi
 
   # Faker API
@@ -52,6 +58,18 @@ start() {
   then
     echo "Initializing Faker producer service..."
     docker-compose -f faker-producer/docker-compose.yml up -d
+    echo "Faker service launched! ✅"
+  fi
+
+    # Faker API
+  echo -n "Do you want to start Kraken Producer? (y/n) > "
+  read -r KRAKEN_OPTION
+
+  if [ "$KRAKEN_OPTION" == "y" ]
+  then
+    echo "Initializing Kraken producer service..."
+    docker-compose -f kraken-producer/docker-compose.yml up -d
+    echo "Kraken service launched! ✅"
   fi
 
 
@@ -63,6 +81,7 @@ start() {
   then
     echo "Initializing consumer services..."
     docker-compose -f consumers/docker-compose.yml up -d
+    echo "Consumer services launched! ✅"
   fi
 
   # -- Data visualization container
@@ -73,8 +92,12 @@ start() {
   then
     echo "Initializing Data-Vis service..."
     docker-compose -f data-vis/docker-compose.yml up -d
+    echo "Data-vis service launched! ✅"
   fi
 
+  # echo "Waiting and Creating Sink services for Cassandra... ⏳︎"
+  # sleep 5
+  # docker exec -d kafka-connect "./start-and-wait.sh"
   echo "Done."
 }
 

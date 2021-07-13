@@ -29,6 +29,15 @@ services:
       CASSANDRA_HOST: cassandradb
       CASSANDRA_KEYSPACE: kafkapipeline
     command: ["python", "-u", "python/faker_consumer.py"]
+  krakenconsumer:
+    container_name: krakenconsumer
+    image: consumer
+    environment:
+      KAFKA_BROKER_URL: broker:9092
+      TOPIC_NAME: kraken
+      CASSANDRA_HOST: cassandradb
+      CASSANDRA_KEYSPACE: kafkapipeline
+    command: ["python", "-u", "python/kraken_consumer.py"]
 
 networks:
   default:
