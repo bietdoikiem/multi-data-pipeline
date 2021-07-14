@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+  dash-app:
+    container_name: dash-app
+    hostname: dash-app
+    image: dash-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      CASSANDRA_HOST: cassandradb
+      CASSANDRA_KEYSPACE: kafkapipeline
+      WEATHER_TABLE: weatherreport
+      TWITTER_TABLE: twitterdata
+      FAKER_TABLE: fakerdata
+    ports:
+      - 8050:8050
+
+networks:
+  default:
+    external:
+      name: kafka-network
