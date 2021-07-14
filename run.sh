@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Start process
+#### Start process ####
 start() {
   #! Initialize network
   echo "Do you want to create the required networks? (y/N)"
@@ -84,22 +84,22 @@ start() {
     echo "=> Consumer services launched! ✅"
   fi
 
-  # -- Data visualization container
-  echo -n "Do you want to start Data Visualization container? (y/N) > "
-  read -r VIS_OPTION
+  # -- Dash visualization container
+  echo -n "Do you want to start dash-app container? (y/N) > "
+  read -r DASH_OPTION
 
-  if [ "$VIS_OPTION" == "y" ]
+  if [ "$DASH_OPTION" == "y" ]
   then
-    echo "Initializing Data-Vis service... ⏳︎"
-    docker-compose -f data-vis/docker-compose.yml up -d
-    echo "=> Data-vis service launched! ✅"
+    echo "Initializing Dash service... ⏳︎"
+     docker-compose -f dash-app/docker-compose.yml up -d
+    echo "=> dash-app service launched! ✅"
   fi
 
   # docker exec -d kafka-connect "./start-and-wait.sh"
   echo "Done."
 }
 
-# Build images processs
+#### Build images processs ####
 build() {
   # Cassandra
   echo -n "Do you want to build the image for bootstrapcassandra? (y/N) > "
@@ -164,14 +164,15 @@ build() {
     docker build -f consumers/Dockerfile -t consumer:latest ./consumers
   fi
 
-  # data-vis
-  echo -n "Do you want to build the image for datavis? (y/N) > "
-  read -r VIS_OPTION
+  # dash-app
+  echo -n "Do you want to build the image for dash-app? (y/N) > "
+  read -r DASH_OPTION
 
-  if [ "$VIS_OPTION" == "y" ]
+  if [ "$DASH_OPTION" == "y" ]
   then
-    docker build -f data-vis/Dockerfile -t datavis:laterst ./data-vis
+     docker build -f dash-app/Dockerfile -t dash-app:latest ./dash-app
   fi
+
 
   # Cleaning up dangling images after build
   echo "Cleaning up dangling images after build..."
