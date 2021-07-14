@@ -15,7 +15,7 @@ start() {
   # -- Run Cassandra container
   echo "Setting up Cassandra service... ⏳︎"
   docker-compose -f cassandra/docker-compose.yml up -d
-  progress-bar 5
+  progress-bar 10
   echo "=> Cassandra launched! ✅"
 
   # -- Run Kafka container
