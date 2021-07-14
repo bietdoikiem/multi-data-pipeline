@@ -1,10 +1,9 @@
-FROM python:3.8
+FROM python:3.8.8-slim-buster
 
 WORKDIR /app
 
 ADD ./requirements.txt ./
 RUN pip install -r requirements.txt
-
 ADD ./ ./
 
 CMD ["python3", "-u", "twitter_api.py"]

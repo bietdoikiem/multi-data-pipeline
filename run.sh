@@ -139,20 +139,20 @@ build() {
 
   # faker-producer_faker
   echo -n "Do you want to build the image for faker-producer_faker? (y/N) > "
-  read -r KRAKEN_OPTION
-
-  if [ "$KRAKEN_OPTION" == "y" ]
-  then
-    docker build -f kraken-producer/Dockerfile -t kraken-producer_kraken:latest ./kraken-producer
-  fi
-
-    # faker-producer_faker
-  echo -n "Do you want to build the image for kraken-producer_kraken? (y/N) > "
   read -r FAKER_OPTION
 
   if [ "$FAKER_OPTION" == "y" ]
   then
     docker build -f faker-producer/Dockerfile -t faker-producer_faker:latest ./faker-producer
+  fi
+
+    # faker-producer_faker
+  echo -n "Do you want to build the image for kraken-producer_kraken? (y/N) > "
+  read -r KRAKEN_OPTION
+
+  if [ "$KRAKEN_OPTION" == "y" ]
+  then
+    docker build -f kraken-producer/Dockerfile -t kraken-producer_kraken:latest ./kraken-producer
   fi
   
   # twitterconsumer
