@@ -186,8 +186,8 @@ clean() {
   docker stop $(docker ps -a -q)  
   # shellcheck disable=SC2046 
   docker rm $(docker ps -a -q)
-  docker container prune
-  docker volume prune
+  docker container prune -f
+  docker volume prune -f
   echo "Clean DONE."
 }
 
