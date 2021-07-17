@@ -96,7 +96,7 @@ start() {
   fi
 
   # docker exec -d kafka-connect "./start-and-wait.sh"
-  echo "Done."
+  echo "Start Done. ✅"
 }
 
 #### Build images processs ####
@@ -177,7 +177,7 @@ build() {
   # Cleaning up dangling images after build
   echo "Cleaning up dangling images after build..."
   docker image prune
-  echo "Build DONE."
+  echo "Build DONE. ✅"
 }
 
 # Clean process
