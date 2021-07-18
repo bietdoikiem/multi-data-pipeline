@@ -1,0 +1,16 @@
+version: "3"
+
+services:
+  cryptopanic:
+    container_name: cryptopanic
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      KAFKA_BROKER_URL: broker:9092
+      TOPIC_NAME: cryptopanic
+
+networks:
+  default:
+    external:
+      name: kafka-network
