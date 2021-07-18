@@ -1,12 +1,10 @@
-from asyncio.queues import Queue
 from datetime import datetime
 import time
 import os
 from aiokafka import AIOKafkaProducer
-from requests.models import Response
 import ujson
-import requests
 from src.types import CryptoPanicResponse, CryptoPanicSchema
+from src.utils.fetch_utils import batch_async_fetch
 import configparser
 import asyncio
 
@@ -20,59 +18,6 @@ config = configparser.ConfigParser()
 config.read('cryptopanic_service.cfg')
 cryptopanic_api_credential = config['cryptopanic_api_credential']
 CRYPTOPANIC_API_KEY = cryptopanic_api_credential['api_key']
-
-
-async def producer(queue: Queue, arg, callback):
-  result: Response
-  try:
-    result = await callback(arg)
-    await asyncio.sleep(0.2)
-    await queue.put(result.json())
-  except Exception as error:
-    print("Producer failed (%s)" % error)
-  return result
-
-
-async def consumer(queue: Queue, agg_result: list):
-  result = await queue.get()
-  queue.task_done()
-  agg_result.append(result)
-
-
-async def fetch(url):
-  try:
-    r = requests.get(url)
-    return r
-  except Exception as error:
-    print("Request to CryptoPanic failed (%s)" % error)
-  return None
-
-
-async def batch_async_fetch(url_list):
-  agg_result = []
-  queue = asyncio.Queue()
-
-  # fire up both producers and consumers
-  producers = [
-      asyncio.create_task(producer(queue, url, fetch)) for url in url_list
-  ]
-  consumers = [
-      asyncio.create_task(consumer(queue, agg_result))
-      for _ in range(len(url_list))
-  ]
-
-  # with both producers and consumers running, wait for
-  # the producers to finish
-  await asyncio.gather(*producers)
-
-  # wait for the remaining tasks to be processed
-  await queue.join()
-
-  # cancel the consumers, which are idle
-  for c in consumers:
-    c.cancel()
-
-  return agg_result
 
 
 async def main():
@@ -109,9 +54,9 @@ async def main():
       data = CryptoPanicSchema(news['kind'], news['source']['title'],
                                news['source']['domain'], news['title'],
                                news['published_at'], news['url'])
-    # producer.send(TOPIC_NAME, value=news)
-    print(ujson.dumps(data.__dict__))
-    time.sleep(0.5)
+      # producer.send(TOPIC_NAME, value=news)
+      print(ujson.dumps(data.__dict__))
+      time.sleep(0.5)
 
 
 if __name__ == "__main__":
