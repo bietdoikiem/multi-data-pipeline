@@ -61,4 +61,25 @@ curl -s \
     "topic.faker.kafkapipeline.fakerdata.consistencyLevel": "LOCAL_QUORUM"
   }
 }'
+
+echo "Starting CryptoPanic Sink"
+curl -s \
+     -X POST http://localhost:8083/connectors \
+     -H "Content-Type: application/json" \
+     -d '{
+  "name": "cryptopanicsink",
+  "config": {
+    "connector.class": "com.datastax.oss.kafka.sink.CassandraSinkConnector",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",  
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable":"false",
+    "tasks.max": "10",
+    "topics": "cryptopanic",
+    "contactPoints": "cassandradb",
+    "loadBalancing.localDc": "datacenter1",
+    "topic.faker.kafkapipeline.cryptopanic_news.mapping": "kind=value.kind, source_title=value.source_title, source_domain=value.source_domain, title=value.title, published_at=value.published_at, url=value.url",
+    "topic.faker.kafkapipeline.cryptopanic_news.consistencyLevel": "LOCAL_QUORUM"
+  }
+}'
 echo "Done."

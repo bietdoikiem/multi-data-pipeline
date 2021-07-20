@@ -22,3 +22,4 @@ CREATE TABLE twitterdata (
   PRIMARY KEY (location, tweet_date)
 );
 
+

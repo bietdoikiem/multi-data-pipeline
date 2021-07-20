@@ -11,3 +11,12 @@ CREATE TABLE IF NOT EXISTS fakerdata (
   image_url TEXT,
   PRIMARY KEY (username, email)
 );
+
+CREATE TABLE IF NOT EXISTS cryptopanic_news (
+  kind TEXT,
+  source_title TEXT,
+  source_domain TEXT, 
+  title TEXT,
+  published_at TIMESTAMP,
+  url TEXT
+)

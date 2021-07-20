@@ -72,6 +72,16 @@ start() {
     echo "=> Kraken service launched! ✅"
   fi
 
+  echo -n "Do you want to start CryptoPanic Producer? (y/N) > "
+  read -r CRYPTOPANIC_OPTION
+
+  if [ "$CRYPTOPANIC_OPTION" == "y" ]
+  then
+    echo "Initializing CryptoPanic producer service... ⏳︎"
+    docker-compose -f cryptopanic-producer/docker-compose.yml up -d
+    echo "=> CryptoPanic service launched! ✅"
+  fi  
+
 
   # -- Run consumer containers
   echo -n "Do you want to start Consumer containers? (y/N) > "
@@ -146,7 +156,7 @@ build() {
     docker build -f faker-producer/Dockerfile -t faker-producer_faker:latest ./faker-producer
   fi
 
-    # faker-producer_faker
+  # kraken-producer_kraken
   echo -n "Do you want to build the image for kraken-producer_kraken? (y/N) > "
   read -r KRAKEN_OPTION
 
@@ -154,7 +164,16 @@ build() {
   then
     docker build -f kraken-producer/Dockerfile -t kraken-producer_kraken:latest ./kraken-producer
   fi
-  
+
+  # cryptopanic-producer_cryptopanic
+  echo -n "Do you want to build the image for cryptopanic-producer_cryptopanic (y/N) > "
+  read -r CRYPTOPANIC_OPTION
+
+  if [ "$CRYPTOPANIC_OPTION" == "y" ]
+  then
+    docker build -f ./cryptopanic-producer/Dockerfile -t cryptopanic:latest ./cryptopanic-producer
+  fi  
+
   # twitterconsumer
   echo -n "Do you want to build the image for consumer? (y/N) > "
   read -r CONSUMER_OPTION
