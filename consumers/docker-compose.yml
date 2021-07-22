@@ -38,6 +38,15 @@ services:
       CASSANDRA_HOST: cassandradb
       CASSANDRA_KEYSPACE: kafkapipeline
     command: ["python", "-u", "python/kraken_consumer.py"]
+  cryptopanicconsumer:
+    container_name: cryptopanicconsumer
+    image: consumer
+    environment:
+      KAFKA_BROKER_URL: broker:9092
+      TOPIC_NAME: cryptopanic
+      CASSANDRA_HOST: cassandradb
+      CASSANDRA_KEYSPACE: kafkapipeline
+    command: ["python", "-u", "python/cryptopanic_consumer.py"]
 
 networks:
   default:

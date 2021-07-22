@@ -78,8 +78,8 @@ curl -s \
     "topics": "cryptopanic",
     "contactPoints": "cassandradb",
     "loadBalancing.localDc": "datacenter1",
-    "topic.faker.kafkapipeline.cryptopanic_news.mapping": "kind=value.kind, source_title=value.source_title, source_domain=value.source_domain, title=value.title, published_at=value.published_at, url=value.url",
-    "topic.faker.kafkapipeline.cryptopanic_news.consistencyLevel": "LOCAL_QUORUM"
+    "topic.cryptopanic.kafkapipeline.cryptopanic_news.mapping": "kind=value.kind, source_title=value.source_title, source_domain=value.source_domain, title=value.title, published_at=value.published_at, url=value.url",
+    "topic.cryptopanic.kafkapipeline.cryptopanic_news.consistencyLevel": "LOCAL_QUORUM"
   }
 }'
 echo "Done."

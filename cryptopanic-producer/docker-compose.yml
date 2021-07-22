@@ -3,6 +3,7 @@ version: "3"
 services:
   cryptopanic:
     container_name: cryptopanic
+    image: cryptopanic-producer_cryptopanic
     build:
       context: .
       dockerfile: Dockerfile

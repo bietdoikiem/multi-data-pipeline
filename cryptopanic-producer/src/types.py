@@ -5,7 +5,8 @@ from typing import Optional
 
 # Declare type hints for CryptoPanic response
 @dataclass
-class CryptoPanicResponse(dict):
+class CryptoPanicResponse:
+  '''Class for persisting the fetch response from CryptoPanic'''
   count: int
   next: Optional[str]
   previous: Optional[str]
@@ -13,7 +14,8 @@ class CryptoPanicResponse(dict):
 
 
 @dataclass
-class CryptoPanicSchema(dict):
+class CryptoPanicSchema:
+  '''Class foro determining the schema to send through Kafka topic'''
   kind: str
   source_title: str
   source_domain: str

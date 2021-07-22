@@ -18,5 +18,6 @@ CREATE TABLE IF NOT EXISTS cryptopanic_news (
   source_domain TEXT, 
   title TEXT,
   published_at TIMESTAMP,
-  url TEXT
-)
+  url TEXT,
+  PRIMARY KEY (title, source_domain, url)
+);

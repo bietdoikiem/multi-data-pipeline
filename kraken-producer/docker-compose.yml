@@ -3,6 +3,7 @@ version: "3"
 services:
   kraken:
     container_name: kraken
+    image: kraken-producer_kraken
     build:
       context: .
       dockerfile: Dockerfile

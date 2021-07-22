@@ -171,7 +171,7 @@ build() {
 
   if [ "$CRYPTOPANIC_OPTION" == "y" ]
   then
-    docker build -f ./cryptopanic-producer/Dockerfile -t cryptopanic:latest ./cryptopanic-producer
+    docker build -f ./cryptopanic-producer/Dockerfile -t cryptopanic-producer_cryptopanic:latest ./cryptopanic-producer
   fi  
 
   # twitterconsumer
