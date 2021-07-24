@@ -82,4 +82,25 @@ curl -s \
     "topic.cryptopanic.kafkapipeline.cryptopanic_news.consistencyLevel": "LOCAL_QUORUM"
   }
 }'
+
+echo "Starting Kraken XBT/USD Sink"
+curl -s \
+     -X POST http://localhost:8083/connectors \
+     -H "Content-Type: application/json" \
+     -d '{
+  "name": "krakensink",
+  "config": {
+    "connector.class": "com.datastax.oss.kafka.sink.CassandraSinkConnector",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",  
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable":"false",
+    "tasks.max": "10",
+    "topics": "kraken_btc",
+    "contactPoints": "cassandradb",
+    "loadBalancing.localDc": "datacenter1",
+    "topic.kraken_btc.kafkapipeline.kraken_btc_tick.mapping": "datetime=value.datetime, last_trade_value=value.last_trade_value, volume=value.volume, pair=value.pair",
+    "topic.kraken_btc.kafkapipeline.kraken_btc_tick.consistencyLevel": "LOCAL_QUORUM"
+  }
+}'
 echo "Done."

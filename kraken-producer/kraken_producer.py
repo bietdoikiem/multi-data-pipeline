@@ -1,32 +1,24 @@
-from datetime import datetime
+import asyncio
+from datetime import date, datetime
 import sys
-import signal
 import os
-from kafka import KafkaProducer
+from aiokafka import AIOKafkaProducer
 import ujson
 from websocket import create_connection
+import time
+import aiohttp
 
 KAFKA_BROKER_URL = os.environ.get("KAFKA_BROKER_URL")
 TOPIC_NAME = os.environ.get("TOPIC_NAME")
 SLEEP_TIME = int(os.environ.get("SLEEP_TIME", 30))
 
 
-def timeoutfunction(signalnumber, frame):
-  raise KeyboardInterrupt
-
-
-signal.signal(signal.SIGALRM, timeoutfunction)
-
-
 def reformat_response(res):
-  value_info = res[1]
+  value_info = res[1]['c']
   return {
-      "timestamp": value_info[0],
-      "open": value_info[2],
-      "high": value_info[3],
-      "low": value_info[4],
-      "close": value_info[5],
-      "volume": value_info[7],
+      "datetime": datetime.utcnow().isoformat(sep=' ', timespec='milliseconds'),
+      "last_trade_value": value_info[0],
+      "volume": value_info[1],
       "pair": res[3]
   }
 
@@ -35,54 +27,79 @@ def in_range(number, low, high):
   return low <= number <= high
 
 
-def run(pair, interval):
+async def run(pair: list):
   print("Setting up Kraken producer at {}".format(KAFKA_BROKER_URL))
-  producer = KafkaProducer(
+  producer = AIOKafkaProducer(
       bootstrap_servers=[KAFKA_BROKER_URL],
     # Encode all values as JSON
       value_serializer=lambda x: ujson.dumps(x).encode('utf-8'),
   )
-  # Open websocket connection and subscribe to ticker feed for XBT/USD
-  try:
-    ws = create_connection("wss://ws.kraken.com",)
-  except Exception as error:
-    print("Websocket connection failed (%s)" % error)
-    sys.exit(1)
-
-  # Send subscription request
-  try:
-    ws.send(
-        ujson.dumps({
-            "event": "subscribe",
-            "pair": [pair],
-            "subscription": {
-                "interval": interval,
-                "name": "ohlc"
-            }
-        }))
-  except Exception as error:
-    print("WebSocket subscription/request failed (%s)" % error)
-    ws.close()
-    sys.exit(1)
-
-  print("Waiting for Kraken BTC/USD data...")
-  # Infinite loop waiting for WebSocket data
-  while True:
+  # Retry connection to producer
+  maxReconnections = 20
+  isConnected = False
+  while (isConnected != True and maxReconnections > 0):
     try:
-      response = ws.recv()
-      response = ujson.loads(response)
-      if (isinstance(response, list)):
-        producer.send(TOPIC_NAME, value=reformat_response(response))
-        print("OHLC at", response[1][0], "sent")
-    except KeyboardInterrupt:
-      print("Closing WebSocket connection by KeyboardInterrupt...")
+      await producer.start()
+      isConnected = True
+    except Exception as error:
+      print(
+          "Failed to connect Kafka Producer (%s) \nRetrying Kafka Producer..." %
+          error)
+      time.sleep(5)
+      maxReconnections -= 1
+
+  # If failed to reconnect
+  print(isConnected)
+  if (isConnected == False):
+    print("Kafka Producer failed to start! Exitting application...")
+    await producer.stop()
+    sys.exit(1)
+  # Open websocket connection and subscribe to ticker feed for XBT/USD
+  session = aiohttp.ClientSession()
+
+  async with session.ws_connect("wss://ws.kraken.com") as ws:
+    # Send websocket subscription to XBT/USD
+    print("Setting subscription to Ticker XBT/uSD")
+    try:
+      await ws.send_json(
+          {
+              "event": "subscribe",
+              "pair": pair,
+              "subscription": {
+                  "name": "ticker"
+              }
+          },
+          dumps=ujson.dumps)
+      await asyncio.sleep(1)
+    except Exception as error:
+      print("WebSocket subscription/request failed!")
+      print(error)
       ws.close()
       sys.exit(1)
+    # Keep connection to retrieve data from ticker Kraken API
+    try:
+      async for msg in ws:
+        if msg.type == aiohttp.WSMsgType.TEXT:
+          current_timestamp = datetime.utcnow().timestamp()
+          response = ujson.loads(msg.data)
+          if (isinstance(response, list)):
+            await producer.send_and_wait(TOPIC_NAME,
+                                         value=reformat_response(response))
+            print(f"Tick at {current_timestamp} sent!")
+        elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
+          break
     except Exception as error:
-      print("Websocket failed (%s)" % error)
-      sys.exit(1)
+      print("WebSocket failed!")
+      print(error)
+      await producer.stop()
+      await ws.close()
+    finally:
+      print("Finally Done with Websocket Connection!")
+      await producer.stop()
+      await ws.close()
+  await session.close()
 
 
 if __name__ == "__main__":
-  print("Setup-ing Kraken...")
-  run("XBT/USD", 1)
+  print("Setting up Kraken BTC...")
+  asyncio.run(run(["XBT/USD"]))

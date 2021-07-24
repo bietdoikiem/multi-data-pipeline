@@ -15,13 +15,13 @@ start() {
   # -- Run Cassandra container
   echo "Setting up Cassandra service... ⏳︎"
   docker-compose -f cassandra/docker-compose.yml up -d
-  progress-bar 10
+  progress-bar 12
   echo "=> Cassandra launched! ✅"
 
   # -- Run Kafka container
   echo "Setting up Kafka services... ⏳︎"
   docker-compose -f kafka/docker-compose.yml up -d
-  progress-bar 5
+  progress-bar 8
   echo "=> Kafka launched! ✅"
 
   # Manually activate kafka-connect ./start-and-wait.sh script

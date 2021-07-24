@@ -9,7 +9,7 @@ services:
       dockerfile: Dockerfile
     environment:
       KAFKA_BROKER_URL: broker:9092
-      TOPIC_NAME: kraken
+      TOPIC_NAME: kraken_btc
 
 networks:
   default:
