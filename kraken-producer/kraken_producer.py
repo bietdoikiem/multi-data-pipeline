@@ -13,14 +13,18 @@ TOPIC_NAME = os.environ.get("TOPIC_NAME")
 SLEEP_TIME = int(os.environ.get("SLEEP_TIME", 30))
 
 
-def reformat_response(res):
-  value_info = res[1]['c']
-  return {
-      "datetime": datetime.utcnow().isoformat(sep=' ', timespec='milliseconds'),
-      "last_trade_value": value_info[0],
-      "volume": value_info[1],
-      "pair": res[3]
-  }
+# def reformat_response(res):
+#   value_info = res[1]['c']
+#   return {
+#       "datetime": datetime.utcnow().isoformat(sep=' ', timespec='milliseconds'),
+#       "last_trade_value": value_info[0],
+#       "volume": value_info[1],
+#       "pair": res[3]
+#   }
+
+
+def timestamp_response(current_ts, res):
+  return {"timestamp": current_ts, "result": res}
 
 
 def in_range(number, low, high):
@@ -55,11 +59,11 @@ async def run(pair: list):
     await producer.stop()
     sys.exit(1)
   # Open websocket connection and subscribe to ticker feed for XBT/USD
-  session = aiohttp.ClientSession()
+  session = aiohttp.ClientSession(json_serialize=ujson.dumps)
 
   async with session.ws_connect("wss://ws.kraken.com") as ws:
     # Send websocket subscription to XBT/USD
-    print("Setting subscription to Ticker XBT/uSD")
+    print("Setting subscription to Ticker XBT/USD")
     try:
       await ws.send_json(
           {
@@ -84,8 +88,9 @@ async def run(pair: list):
           response = ujson.loads(msg.data)
           if (isinstance(response, list)):
             await producer.send_and_wait(TOPIC_NAME,
-                                         value=reformat_response(response))
-            print(f"Tick at {current_timestamp} sent!")
+                                         value=timestamp_response(
+                                             current_timestamp, response))
+            print(f"Tick event type {response[0]} at {current_timestamp} sent!")
         elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
           break
     except Exception as error:
@@ -102,4 +107,4 @@ async def run(pair: list):
 
 if __name__ == "__main__":
   print("Setting up Kraken BTC...")
-  asyncio.run(run(["XBT/USD"]))
+  asyncio.run(run(["XBT/USD", "ETH/USD"]))

@@ -34,7 +34,8 @@ services:
     image: consumer
     environment:
       KAFKA_BROKER_URL: broker:9092
-      TOPIC_NAME: kraken_btc
+      TOPIC_NAME: kraken
+      SINK_TOPIC_NAME: krakensink
       CASSANDRA_HOST: cassandradb
       CASSANDRA_KEYSPACE: kafkapipeline
     command: ["python", "-u", "python/kraken_consumer.py"]

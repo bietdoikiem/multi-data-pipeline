@@ -96,11 +96,11 @@ curl -s \
     "key.converter": "org.apache.kafka.connect.json.JsonConverter",
     "key.converter.schemas.enable":"false",
     "tasks.max": "10",
-    "topics": "kraken_btc",
+    "topics": "krakensink",
     "contactPoints": "cassandradb",
     "loadBalancing.localDc": "datacenter1",
-    "topic.kraken_btc.kafkapipeline.kraken_btc_tick.mapping": "datetime=value.datetime, last_trade_value=value.last_trade_value, volume=value.volume, pair=value.pair",
-    "topic.kraken_btc.kafkapipeline.kraken_btc_tick.consistencyLevel": "LOCAL_QUORUM"
+    "topic.krakensink.kafkapipeline.kraken_tick_data.mapping": "datetime=value.datetime, ask_value=value.ask_value, ask_volume=value.ask_volume, bid_value=value.bid_value, bid_volume=value.bid_volume, closed_value=value.closed_value, closed_volume=value.closed_volume, pair=value.pair",
+    "topic.krakensink.kafkapipeline.kraken_tick_data.consistencyLevel": "LOCAL_QUORUM"
   }
 }'
 echo "Done."

@@ -22,10 +22,14 @@ CREATE TABLE IF NOT EXISTS cryptopanic_news (
   PRIMARY KEY (title, source_domain, url)
 );
 
-CREATE TABLE IF NOT EXISTS kraken_btc_tick (
+CREATE TABLE IF NOT EXISTS kraken_tick_data (
   datetime TIMESTAMP,
-  last_trade_value DOUBLE,
-  volume DOUBLE,
+  ask_value DOUBLE,
+  ask_volume DOUBLE,
+  bid_value DOUBLE,
+  bid_volume DOUBLE,
+  closed_value DOUBLE,
+  closed_volume DOUBLE,
   pair TEXT,
   PRIMARY KEY(datetime, pair)
 );
