@@ -3,9 +3,23 @@
 } */
 
 .col-elem {
-	margin-top: 10px;
 	padding: 20px;
 	outline: 1px solid rgba(72, 72, 72, 1);
 	-moz-outline-radius: 10px;
 	-webkit-outline-radius: 10px;
+	height: 100vh;
+}
+
+.dropdown-item {
+	background-color: #343a40;
+	color: #f0f0f0;
+}
+
+.dropdown-item:hover {
+	background-color: #515a63;
+	color: #f0f0f0;
+}
+
+.dropdown-menu.show {
+	background-color: #343a40;
 }
