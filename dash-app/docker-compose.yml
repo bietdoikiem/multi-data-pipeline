@@ -14,10 +14,13 @@ services:
       WEATHER_TABLE: weatherreport
       TWITTER_TABLE: twitterdata
       FAKER_TABLE: fakerdata
+      KRAKEN_TABLE: kraken_tick_data
+      CRYPTOPANIC_TABLE: cryptopanic_news
     ports:
       - 8050:8050
+    restart: unless-stopped
 
 networks:
   default:
-    external:
-      name: kafka-network
+    external: true
+    name: cassandra-network

@@ -3,7 +3,6 @@
 # Run this app with `python app.py` and
 # visit http://127.0.0.1:8050/ in your web browser.
 
-import dash
 from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
@@ -11,7 +10,7 @@ import dash_bootstrap_components as dbc
 from maindash import app
 from pages import kraken, owm, twitter
 
-# app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+# app = dash.Dash(__name__,external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # add some padding.
 CONTENT_STYLE = {"background-color": "#000000"}
@@ -42,7 +41,6 @@ def make_layout():
   return html.Div([dcc.Location(id="url"), navbar, content])
 
 
-# TODO: Add individual render page function for page-content
 # Route navigation callback
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
 def render_page_content(pathname):
