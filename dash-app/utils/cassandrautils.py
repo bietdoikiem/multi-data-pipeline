@@ -1,21 +1,21 @@
 from calendar import c
 import os
-import re
-import sys
 import pandas as pd
 # pylint: disable=no-name-in-module
-from cassandra.cluster import Cluster
+from cassandra.cluster import Cluster, ResultSet
 # pylint: disable=no-name-in-module
-from cassandra.query import dict_factory
+from cassandra.query import ordered_dict_factory
 import enum
-from abc import ABC, abstractmethod
+from abc import ABC
 
 CASSANDRA_HOST = os.environ.get("CASSANDRA_HOST") if os.environ.get(
-    "CASSANDRA_HOST") else "cassandradb"
+    "CASSANDRA_HOST") else "localhost"
 CASSANDRA_KEYSPACE = os.environ.get("CASSANDRA_KEYSPACE") if os.environ.get(
     "CASSANDRA_KEYSPACE") else "kafkapipeline"
-KRAKEN_TABLE = os.environ.get("KRAKEN_TABLE")
-CRYPTOPANIC_TABLE = os.environ.get("CRYPTOPANIC_TABLE")
+KRAKEN_TABLE = os.environ.get("KRAKEN_TABLE") if os.environ.get(
+    "KRAKEN_TABLE") else "kraken_tick_data"
+CRYPTOPANIC_TABLE = os.environ.get("CRYPTOPANIC_TABLE") if os.environ.get(
+    "CRYPTOPANIC_TABLE") else "cryptopanic_news"
 
 
 class SortingType(enum.Enum):
@@ -38,36 +38,29 @@ class QueryUtils(ABC):
             col_cursor=None,
             col_order=None,
             to_dataframe=False):
-    if (isinstance(CASSANDRA_HOST, list)):
-      cluster = Cluster(CASSANDRA_HOST)
-    else:
-      cluster = Cluster([CASSANDRA_HOST])
     # Setup cassandra connection and query type
-    session = cluster.connect(CASSANDRA_KEYSPACE)
-    session.row_factory = dict_factory
+    session = self.cluster.connect(CASSANDRA_KEYSPACE)
+    session.row_factory = ordered_dict_factory
     # Check condition if sort
     if (sort != None and col_order == None):
       raise Exception("Column used for sorting order is empty, please specify!")
     # Query statement
     CQL_QUERY = f"""
-    --sql START-highlight
-
     SELECT * 
     FROM {self.table}
-    -- if has cursor
     {"WHERE '{}' <= {}".format(col_cursor, cursor) if cursor != None else ""}
-    -- if-has-sort
     {"ORDER BY '{}'".format(col_order) if sort != None else ""}
-    -- if-has-limit
     {"LIMIT {}".format(limit) if limit != None else ""}
-
-    -- END-highlight
     ;
     """
-    rows = session.execute(CQL_QUERY)
+    future = session.execute_async(CQL_QUERY)
+    try:
+      rows = future.result()
+    except Exception:
+      print("Operation failed!")
     if (to_dataframe == True):
       return pd.DataFrame(rows)
-    return rows
+    return [dict(row) for row in rows.all()]
 
 
 class KrakenQueryUtils(QueryUtils):
@@ -82,14 +75,11 @@ class KrakenQueryUtils(QueryUtils):
                   cursor=None,
                   col_cursor=None,
                   col_order=None,
-                  to_dataframe=False):
-    if (isinstance(CASSANDRA_HOST, list)):
-      cluster = Cluster(CASSANDRA_HOST)
-    else:
-      cluster = Cluster([CASSANDRA_HOST])
+                  to_dataframe=False,
+                  to_json=False):
     # Setup cassandra connection and query type
-    session = cluster.connect(CASSANDRA_KEYSPACE)
-    session.row_factory = dict_factory
+    session = self.cluster.connect(CASSANDRA_KEYSPACE)
+    session.row_factory = ordered_dict_factory
     # Check condition if sort
     if (sort != None and col_order == None):
       raise Exception("Column used for sorting order is empty, please specify!")
@@ -103,14 +93,17 @@ class KrakenQueryUtils(QueryUtils):
     {"LIMIT {}".format(limit) if limit != None else ""}
     ;
     """
-    print("CQLQUERY")
-    print(CQL_QUERY, flush=True)
-    rows = session.execute(CQL_QUERY)
+    future = session.execute_async(CQL_QUERY)
+    try:
+      rows = future.result()
+    except Exception:
+      print("Operation failed!")
     if (to_dataframe == True):
       return pd.DataFrame(rows)
-    return rows
+    return [dict(row) for row in rows.all()]
 
 
+# FIXME: Local variable 'rows' return before assignment AND try to optimize cluster connect!
 class CryptoPanicQueryUtils(QueryUtils):
 
   def __init__(self, table: str = CRYPTOPANIC_TABLE):
@@ -123,4 +116,5 @@ class CryptoPanicQueryUtils(QueryUtils):
             col_cursor=None,
             col_order=None,
             to_dataframe=False):
-    super().query(limit, sort, cursor, col_cursor, col_order, to_dataframe)
+    return super().query(limit, sort, cursor, col_cursor, col_order,
+                         to_dataframe)

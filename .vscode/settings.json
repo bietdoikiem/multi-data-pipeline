@@ -9,8 +9,10 @@
 		"cassandrautils",
 		"cqlquery",
 		"ipywidgets",
+		"ohlc",
 		"pylint",
 		"rgba",
+		"ujson",
 		"xaxis",
 		"yaxis"
 	]
