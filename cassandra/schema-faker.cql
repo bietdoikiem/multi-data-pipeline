@@ -31,5 +31,5 @@ CREATE TABLE IF NOT EXISTS kraken_tick_data (
   closed_value DOUBLE,
   closed_volume DOUBLE,
   pair TEXT,
-  PRIMARY KEY(datetime, pair)
+  PRIMARY KEY(pair, datetime)
 );

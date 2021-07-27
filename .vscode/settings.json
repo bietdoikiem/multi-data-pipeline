@@ -1,4 +1,17 @@
 {
 	"python.linting.pylintEnabled": true,
-	"python.linting.enabled": true
+	"python.linting.enabled": true,
+	"cSpell.words": [
+		"OLAP",
+		"Xtreme",
+		"bgcolor",
+		"cassandradb",
+		"cassandrautils",
+		"cqlquery",
+		"ipywidgets",
+		"pylint",
+		"rgba",
+		"xaxis",
+		"yaxis"
+	]
 }
