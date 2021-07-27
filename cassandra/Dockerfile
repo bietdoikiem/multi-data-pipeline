@@ -1,4 +1,4 @@
-FROM cassandra
+FROM cassandra:3.11.1
 
 WORKDIR /opt/scripts
 
