@@ -2,7 +2,7 @@ from calendar import c
 import os
 import pandas as pd
 # pylint: disable=no-name-in-module
-from cassandra.cluster import Cluster, ResultSet
+from cassandra.cluster import Cluster
 # pylint: disable=no-name-in-module
 from cassandra.query import ordered_dict_factory
 import enum
@@ -18,7 +18,7 @@ CRYPTOPANIC_TABLE = os.environ.get("CRYPTOPANIC_TABLE") if os.environ.get(
     "CRYPTOPANIC_TABLE") else "cryptopanic_news"
 
 
-class SortingType(enum.Enum):
+class SortingType(str, enum.Enum):
   DESCENDING = "DESC"
   ASCENDING = "ASC"
 
@@ -30,6 +30,7 @@ class QueryUtils(ABC):
     self.table = table
     self.cluster = Cluster(CASSANDRA_HOST) if (isinstance(
         CASSANDRA_HOST, list)) else Cluster([CASSANDRA_HOST])
+    self.session = self.cluster.connect(CASSANDRA_KEYSPACE)
 
   def query(self,
             limit=None,
@@ -39,8 +40,7 @@ class QueryUtils(ABC):
             col_order=None,
             to_dataframe=False):
     # Setup cassandra connection and query type
-    session = self.cluster.connect(CASSANDRA_KEYSPACE)
-    session.row_factory = ordered_dict_factory
+    self.session.row_factory = ordered_dict_factory
     # Check condition if sort
     if (sort != None and col_order == None):
       raise Exception("Column used for sorting order is empty, please specify!")
@@ -49,37 +49,37 @@ class QueryUtils(ABC):
     SELECT * 
     FROM {self.table}
     {"WHERE '{}' <= {}".format(col_cursor, cursor) if cursor != None else ""}
-    {"ORDER BY '{}'".format(col_order) if sort != None else ""}
+    {"ORDER BY {} {}".format(col_order, sort) if sort != None else ""}
     {"LIMIT {}".format(limit) if limit != None else ""}
     ;
     """
-    future = session.execute_async(CQL_QUERY)
-    try:
-      rows = future.result()
-    except Exception:
-      print("Operation failed!")
-    if (to_dataframe == True):
-      return pd.DataFrame(rows)
+    # future = self.session.execute_async(CQL_QUERY)
+    # try:
+    #   rows = future.result()
+    # except Exception:
+    #   print("Operation failed!")
+    # if (to_dataframe == True):
+    #   return pd.DataFrame(rows)
+    rows = self.session.execute(CQL_QUERY)
     return [dict(row) for row in rows.all()]
 
 
 class KrakenQueryUtils(QueryUtils):
 
-  def __init__(self, table: str = KRAKEN_TABLE, pair=None):
+  def __init__(self, table: str = KRAKEN_TABLE):
     super().__init__(table)
-    self.pair = pair
 
   def queryByPair(self,
+                  pair=None,
                   limit=None,
-                  sort: SortingType = SortingType.DESCENDING,
+                  sort: SortingType = None,
                   cursor=None,
                   col_cursor=None,
                   col_order=None,
                   to_dataframe=False,
                   to_json=False):
     # Setup cassandra connection and query type
-    session = self.cluster.connect(CASSANDRA_KEYSPACE)
-    session.row_factory = ordered_dict_factory
+    self.session.row_factory = ordered_dict_factory
     # Check condition if sort
     if (sort != None and col_order == None):
       raise Exception("Column used for sorting order is empty, please specify!")
@@ -87,13 +87,13 @@ class KrakenQueryUtils(QueryUtils):
     CQL_QUERY = f"""
     SELECT * 
     FROM {self.table}
-    {"WHERE pair = '{}'".format(self.pair) if cursor == None else ""}
-    {"WHERE pair = '{}' AND {} <= {}".format(self.pair, col_cursor, cursor) if cursor != None else ""}
-    {"ORDER BY {}".format(col_order) if sort != None else ""}
+    {"WHERE pair = '{}'".format(pair) if cursor == None else ""}
+    {"WHERE pair = '{}' AND {} <= {}".format(pair, col_cursor, cursor) if cursor != None else ""}
+    {"ORDER BY {} {}".format(col_order, sort) if col_order != None and sort != None else ""}
     {"LIMIT {}".format(limit) if limit != None else ""}
     ;
     """
-    future = session.execute_async(CQL_QUERY)
+    future = self.session.execute_async(CQL_QUERY)
     try:
       rows = future.result()
     except Exception:
@@ -111,10 +111,32 @@ class CryptoPanicQueryUtils(QueryUtils):
 
   def query(self,
             limit=None,
-            sort: SortingType = SortingType.DESCENDING,
+            sort: SortingType = None,
             cursor=None,
             col_cursor=None,
             col_order=None,
             to_dataframe=False):
-    return super().query(limit, sort, cursor, col_cursor, col_order,
-                         to_dataframe)
+    # Setup cassandra connection and query type
+    self.session.row_factory = ordered_dict_factory
+    # Check condition if sort
+    if (sort != None and col_order == None):
+      raise Exception("Column used for sorting order is empty, please specify!")
+    # Query statement
+    CQL_QUERY = f"""
+    SELECT * 
+    FROM {self.table}
+    {"WHERE kind IN ('news', 'media')" if cursor == None else ""}    
+    {"WHERE kind IN ('news', 'media') AND {} <= {}".format(col_cursor, cursor) if cursor != None else ""}
+    {"ORDER BY {} {}".format(col_order, sort) if col_order != None and sort != None else ""}
+    {"LIMIT {}".format(limit) if limit != None else ""}
+    ;
+    """
+    # future = self.session.execute_async(CQL_QUERY)
+    # try:
+    #   rows = future.result()
+    # except Exception:
+    #   print("Operation failed!")
+    # if (to_dataframe == True):
+    #   return pd.DataFrame(rows)
+    rows = self.session.execute(CQL_QUERY)
+    return [dict(row) for row in rows.all()]

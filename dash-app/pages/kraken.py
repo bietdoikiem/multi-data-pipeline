@@ -1,20 +1,20 @@
+from datetime import datetime
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
+from dash.exceptions import PreventUpdate
 from maindash import app
 import dash
 from plotly import graph_objects as go
 from plotly.missing_ipywidgets import FigureWidget
 import pandas as pd
-from utils.cassandrautils import KrakenQueryUtils, CryptoPanicQueryUtils
+from utils.cassandrautils import KrakenQueryUtils, CryptoPanicQueryUtils, SortingType
 import json
 
-currency_pairs = ["XBT/USD", "ETH/USD"]
-
-DF = pd.read_csv(
-    'https://raw.githubusercontent.com/plotly/datasets/master/finance-charts-apple.csv'
-)
+# Connect to Query
+kraken_utils = KrakenQueryUtils()
+cryptopanic_utils = CryptoPanicQueryUtils()
 
 
 def render_kraken():
@@ -57,12 +57,12 @@ def render_kraken():
                       dcc.Store(id='intermediate-pair'),
                       dcc.Store(id='intermediate-pair-value-json'),
                       dcc.Store(id="intermediate-cryptopanic-value"),
+                      dcc.Store(id="prev-index-time"),
                       dcc.Interval(id='news-interval',
                                    interval=60 * 1000,
                                    n_intervals=0),
-                      dcc.Interval(id='chart-interval',
-                                   interval=60 * 1000,
-                                   n_intervals=0)
+                      dcc.Interval(
+                          id='chart-interval', interval=5 * 1000, n_intervals=0)
                   ],
                            className="inner-box"),
               ],
@@ -100,8 +100,7 @@ def candlestick_chart(x_series, open, high, low, close):
 
 def headline_news(top: str = 10):
   print("fetching...")
-  cryptopanic_query = CryptoPanicQueryUtils()
-  return cryptopanic_query.query(limit=top, col_order="published_at")
+  return cryptopanic_utils.query(limit=top)
 
 
 def create_list_item(title):
@@ -121,7 +120,7 @@ def live_update_news(n):
     print("Live Update no.", n)
   else:
     print("Initial CryptoPanic fetch!")
-  print(news_data, flush=True)
+  # print(news_data, flush=True)
   return json.dumps(news_data, default=str)
 
 
@@ -171,11 +170,12 @@ def display_candlestick_by_pair(label, json_value):
     print("Successfully updated {} chart".format(label))
     return fig
   # If initial fetch on pair
-  kraken_utils = KrakenQueryUtils(pair=label)
-  df_closed = kraken_utils.queryByPair(limit=30,
+  df_closed = kraken_utils.queryByPair(limit=500,
+                                       pair=label,
                                        col_order="datetime",
+                                       sort=SortingType.DESCENDING,
                                        to_dataframe=True)
-  print("Query pair successfully on switch!")
+  print("Query pair {} successfully on switch!".format(label))
   df_closed['datetime'] = pd.to_datetime(df_closed['datetime'])
   df_closed = df_closed.reset_index().set_index('datetime')
   df_closed_ohlc = df_closed['closed_value'].resample('1Min').ohlc()
@@ -189,23 +189,31 @@ def display_candlestick_by_pair(label, json_value):
 
 # TODO: Map interval component to chart! create another layer call intermediate-pair and intermediate-value-json (for holding JSON value)
 # Define callback for live-update data in a specific interval
-@app.callback(Output("intermediate-pair-value-json", "data"),
-              Input("chart-interval", "n_intervals"),
-              State("intermediate-pair", "data"))
-def live_update_pair(n, pair):
+@app.callback([
+    Output("intermediate-pair-value-json", "data"),
+    Output("prev-index-time", "data")
+], [
+    Input("chart-interval", "n_intervals"),
+    State("intermediate-pair", "data"),
+    State("prev-index-time", "data")
+])
+def live_update_pair(n, pair, prev_time):
   if (n == 0):
-    return None
-  kraken_utils = KrakenQueryUtils(pair=pair)
-  kraken_data = kraken_utils.queryByPair(limit=30,
+    raise PreventUpdate
+  kraken_data = kraken_utils.queryByPair(limit=500,
+                                         pair=pair,
                                          col_order="datetime",
+                                         sort=SortingType.DESCENDING,
                                          to_dataframe=False)
-  print("Live Update no.", n)
   # print(kraken_data, flush=True)
-  return json.dumps(kraken_data, default=str)
+  # print("Prev Time:", prev_time)
+  if (prev_time is not None):
+    if (datetime.fromisoformat(str(prev_time)) == kraken_data[0]['datetime']):
+      print("Nothing to Update!")
+      raise PreventUpdate
+  print("Live Update no.", n)
+  # print(kraken_data)
+  return [json.dumps(kraken_data, default=str), kraken_data[0]['datetime']]
 
 
-# @app.callback(Output("graph", "figure"),
-#               Input("intermediate-pair-value-json", "data"))
-# def update_chart_on_interval():
-#   fig = candlestick_chart()
-#   return fig
+# TODO: Tomorrow please Test real-time data stream again
