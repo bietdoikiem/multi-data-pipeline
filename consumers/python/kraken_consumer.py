@@ -11,13 +11,12 @@ import time
 TOPIC_NAME = os.environ.get("TOPIC_NAME") if os.environ.get(
     "TOPIC_NAME") else "kraken"
 SINK_TOPIC_NAME = os.environ.get("SINK_TOPIC_NAME") if os.environ.get(
-    "SINK_TOPIC_NAME") else "krakensinl"
+    "SINK_TOPIC_NAME") else "krakensink"
 KAFKA_BROKER_URL = os.environ.get("KAFKA_BROKER_URL", "localhost:9092")
 
 
 def reformat_msg(msg):
   value_info = msg['result'][1]
-  print("FAILED!")
   # datetime.utcnow().isoformat(sep=' ', timespec='milliseconds')
   tick_datetime_str: str = datetime.fromtimestamp(float(
       msg['timestamp'])).isoformat(sep=' ', timespec='milliseconds')

@@ -23,3 +23,12 @@
 .dropdown-menu.show {
 	background-color: #343a40;
 }
+
+#news-list > a {
+	text-decoration: none !important;
+	color: #f0f0f0;
+}
+#news-list > a:hover {
+	text-decoration: none !important;
+	color: #959faa;
+}

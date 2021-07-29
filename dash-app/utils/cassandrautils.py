@@ -131,12 +131,12 @@ class CryptoPanicQueryUtils(QueryUtils):
     {"LIMIT {}".format(limit) if limit != None else ""}
     ;
     """
-    # future = self.session.execute_async(CQL_QUERY)
-    # try:
-    #   rows = future.result()
-    # except Exception:
-    #   print("Operation failed!")
-    # if (to_dataframe == True):
-    #   return pd.DataFrame(rows)
-    rows = self.session.execute(CQL_QUERY)
+    future = self.session.execute_async(CQL_QUERY)
+    try:
+      rows = future.result()
+    except Exception:
+      print("Operation failed!")
+    if (to_dataframe == True):
+      return pd.DataFrame(rows)
+    # rows = self.session.execute(CQL_QUERY)
     return [dict(row) for row in rows.all()]

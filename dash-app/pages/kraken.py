@@ -1,9 +1,9 @@
 from datetime import datetime
+from time import time
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
-from dash.exceptions import PreventUpdate
 from maindash import app
 import dash
 from plotly import graph_objects as go
@@ -22,9 +22,8 @@ def render_kraken():
       dbc.Row(children=[
           dbc.Col([
               html.Div(children=[
-                  html.H2("Headline"),
-                  dbc.Card(dbc.ListGroup(
-                      [create_list_item(i) for i in range(1, 16)], flush=True),
+                  html.H2("Top Headlines"),
+                  dbc.Card(dbc.ListGroup(id="news-list", flush=True),
                            color="rgba(72, 72, 72, 1)")
               ],
                        className="col-elem")
@@ -48,12 +47,9 @@ def render_kraken():
                               dbc.DropdownMenuItem(id="ETH/USD-pair",
                                                    children="ETH/USD")
                           ]),
-                      dcc.Loading(id="graph-loading",
-                                  type="default",
-                                  children=dcc.Graph(
-                                      id="graph",
-                                      style={"margin-top": "10px"},
-                                      config={'displayModeBar': False})),
+                      dcc.Graph(id="graph",
+                                style={"display": "none"},
+                                config={'displayModeBar': False}),
                       dcc.Store(id='intermediate-pair'),
                       dcc.Store(id='intermediate-pair-value-json'),
                       dcc.Store(id="intermediate-cryptopanic-value"),
@@ -99,17 +95,21 @@ def candlestick_chart(x_series, open, high, low, close):
 
 
 def headline_news(top: str = 10):
-  print("fetching...")
+  print("=> News fetching...")
   return cryptopanic_utils.query(limit=top)
 
 
-def create_list_item(title):
-  return dbc.ListGroupItem(title,
-                           color="#000000",
-                           style={
-                               "border-width": "0.5px",
-                               "border-color": "rgba(72, 72, 72, 1)",
-                           })
+def create_list_item(title, url, source_title):
+  return dcc.Link(dbc.ListGroupItem(dcc.Markdown(f'''
+  {title} - _{source_title}_
+  '''),
+                                    color="#000000",
+                                    style={
+                                        "border-width": "0.5px",
+                                        "border-color": "rgba(72, 72, 72, 1)",
+                                    }),
+                  href=url,
+                  target='_blank')
 
 
 @app.callback(Output("intermediate-cryptopanic-value", "data"),
@@ -117,11 +117,21 @@ def create_list_item(title):
 def live_update_news(n):
   news_data = headline_news(15)
   if (n > 0):
-    print("Live Update no.", n)
+    print("News Live Update no.", n)
   else:
     print("Initial CryptoPanic fetch!")
   # print(news_data, flush=True)
   return json.dumps(news_data, default=str)
+
+
+@app.callback([Output("news-list", "children")],
+              [Input("intermediate-cryptopanic-value", "data")])
+def create_live_news_list(json_data):
+  data = json.loads(json_data)
+  return [[
+      create_list_item(news['title'], news['url'], news['source_title'])
+      for news in data
+  ]]
 
 
 # Define callback for XBT/USD and ETH/USD dropdown selection
@@ -146,15 +156,32 @@ def display_dynamic_dropdown(label):
   return label
 
 
+# @app.callback([Output("graph", "extendData")],
+#               [Input("chart-interval", "n_intervals")])
+# def test_live_update(n):
+#   current_datetime = datetime.now().isoformat()
+#   print("updating")
+#   return [
+#       dict(close=[[396000.5 + n]],
+#            high=[[39700.5 + n]],
+#            low=[[39500.0 + n]],
+#            open=[[39550.5 + n]],
+#            x=[[current_datetime]])
+#   ]
+
+
 # Define callback for changing trading view to different pairs
-@app.callback(Output("graph", "figure"), [
+@app.callback([
+    Output("graph", "figure"),
+    Output("graph", "style"),
+], [
     Input("intermediate-pair", "data"),
-    Input("intermediate-pair-value-json", "data")
+    Input("intermediate-pair-value-json", "data"),
+    State("chart-interval", "n_intervals"),
 ])
-def display_candlestick_by_pair(label, json_value):
+def display_candlestick_by_pair(label, json_value, n):
   ctx = dash.callback_context
   trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-  print("Switched to chart {}".format(label))
   # If update
   if (trigger_id == "intermediate-pair-value-json"):
     df_closed = pd.DataFrame(
@@ -168,14 +195,14 @@ def display_candlestick_by_pair(label, json_value):
                             low=df_closed_ohlc['low'],
                             close=df_closed_ohlc['close'])
     print("Successfully updated {} chart".format(label))
-    return fig
+    return fig, {"margin-top": "10px", "display": "inline"}
   # If initial fetch on pair
   df_closed = kraken_utils.queryByPair(limit=500,
                                        pair=label,
                                        col_order="datetime",
                                        sort=SortingType.DESCENDING,
                                        to_dataframe=True)
-  print("Query pair {} successfully on switch!".format(label))
+  print("=> Switched to chart {}".format(label))
   df_closed['datetime'] = pd.to_datetime(df_closed['datetime'])
   df_closed = df_closed.reset_index().set_index('datetime')
   df_closed_ohlc = df_closed['closed_value'].resample('1Min').ohlc()
@@ -184,7 +211,7 @@ def display_candlestick_by_pair(label, json_value):
                           high=df_closed_ohlc['high'],
                           low=df_closed_ohlc['low'],
                           close=df_closed_ohlc['close'])
-  return fig
+  return fig, {"margin-top": "10px", "display": "inline"}
 
 
 # TODO: Map interval component to chart! create another layer call intermediate-pair and intermediate-value-json (for holding JSON value)
@@ -199,7 +226,7 @@ def display_candlestick_by_pair(label, json_value):
 ])
 def live_update_pair(n, pair, prev_time):
   if (n == 0):
-    raise PreventUpdate
+    return dash.no_update, dash.no_update
   kraken_data = kraken_utils.queryByPair(limit=500,
                                          pair=pair,
                                          col_order="datetime",
@@ -210,8 +237,8 @@ def live_update_pair(n, pair, prev_time):
   if (prev_time is not None):
     if (datetime.fromisoformat(str(prev_time)) == kraken_data[0]['datetime']):
       print("Nothing to Update!")
-      raise PreventUpdate
-  print("Live Update no.", n)
+      return dash.no_update, prev_time
+  print("Live Update {} of iteration no.".format(pair), n)
   # print(kraken_data)
   return [json.dumps(kraken_data, default=str), kraken_data[0]['datetime']]
 

@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS cryptopanic_news (
   title TEXT,
   published_at TIMESTAMP,
   url TEXT,
-  PRIMARY KEY (title, source_domain, url)
-);
+  PRIMARY KEY ((kind), published_at, url)
+) WITH CLUSTERING ORDER BY (published_at DESC) ;
 
 CREATE TABLE IF NOT EXISTS kraken_tick_data (
   datetime TIMESTAMP,
@@ -32,4 +32,5 @@ CREATE TABLE IF NOT EXISTS kraken_tick_data (
   closed_volume DOUBLE,
   pair TEXT,
   PRIMARY KEY(pair, datetime)
-);
+)
+WITH CLUSTERING ORDER BY (datetime DESC);
