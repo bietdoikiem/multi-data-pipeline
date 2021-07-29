@@ -4,5 +4,5 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 
 
-def render_owm():
-  return html.P("This is the content of OpenWeatherMap page")
+def render_analysis():
+  return html.Div(children=[html.H1("Analysis Page")])

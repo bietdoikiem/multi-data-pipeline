@@ -125,8 +125,8 @@ class CryptoPanicQueryUtils(QueryUtils):
     CQL_QUERY = f"""
     SELECT * 
     FROM {self.table}
-    {"WHERE kind IN ('news', 'media')" if cursor == None else ""}    
-    {"WHERE kind IN ('news', 'media') AND {} <= {}".format(col_cursor, cursor) if cursor != None else ""}
+    {"WHERE kind = 'news'" if cursor == None else ""}    
+    {"WHERE kind = 'news' AND {} <= {}".format(col_cursor, cursor) if cursor != None else ""}
     {"ORDER BY {} {}".format(col_order, sort) if col_order != None and sort != None else ""}
     {"LIMIT {}".format(limit) if limit != None else ""}
     ;

@@ -8,7 +8,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from maindash import app
-from pages import kraken, owm, twitter
+from pages import kraken, analysis, twitter
 
 # app = dash.Dash(__name__,external_stylesheets=[dbc.themes.BOOTSTRAP])
 
@@ -21,10 +21,10 @@ content = html.Div(id='page-content', style=CONTENT_STYLE)
 # Horizontal Navbar
 navbar = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("Kraken", href="/kraken"),
+        dbc.NavItem(dbc.NavLink("KrakenOHLC", href="/kraken"),
                     className="navlink-item"),
-        dbc.NavItem(dbc.NavLink("Twitter", href="/twitter")),
-        dbc.NavItem(dbc.NavLink("OpenWeatherMap", href="/owm")),
+    # dbc.NavItem(dbc.NavLink("Twitter", href="/twitter")),
+        dbc.NavItem(dbc.NavLink("Analysis", href="/analysis")),
     ],
     brand="XtremeOLAP",
     brand_href="/",
@@ -38,7 +38,9 @@ navbar = dbc.NavbarSimple(
 
 
 def make_layout():
-  return html.Div([dcc.Location(id="url"), navbar, content])
+  return html.Div(
+      [html.Div(id="blank-output"),
+       dcc.Location(id="url"), navbar, content])
 
 
 # Route navigation callback
@@ -48,14 +50,15 @@ def render_page_content(pathname):
     return kraken.render_kraken()
   elif pathname == "/twitter":
     return twitter.render_twitter()
-  elif pathname == "/owm":
-    return owm.render_owm()
+  elif pathname == "/analysis":
+    return analysis.render_analysis()
   # If the user tries to navigate to invalid page, return a 404 message
   return dbc.Jumbotron([
       html.H1("404: Not found", className="text-danger"),
       html.Hr(),
       html.P(f"The path {pathname} was not recognized...")
-  ])
+  ],
+                       style={"background-color": "#000000"})
 
 
 # if __name__ == '__main__':

@@ -8,6 +8,9 @@
 	-moz-outline-radius: 10px;
 	-webkit-outline-radius: 10px;
 	height: 100vh;
+	min-height: 100%;
+	overflow: hidden;
+	margin-bottom: 10px;
 }
 
 .dropdown-item {

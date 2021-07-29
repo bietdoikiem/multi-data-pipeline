@@ -7,11 +7,19 @@ import ujson
 from websocket import create_connection
 import time
 import aiohttp
+import logging
+import socket
 
 KAFKA_BROKER_URL = os.environ.get("KAFKA_BROKER_URL")
 TOPIC_NAME = os.environ.get("TOPIC_NAME")
 SLEEP_TIME = int(os.environ.get("SLEEP_TIME", 30))
 
+# logger = logging.getLogger(__name__)
+
+# logging.basicConfig(
+#     stream=sys.stdout,
+#     level=logging.DEBUG,
+#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # def reformat_response(res):
 #   value_info = res[1]['c']
@@ -60,7 +68,6 @@ async def run(pair: list):
     sys.exit(1)
   # Open websocket connection and subscribe to ticker feed for XBT/USD
   session = aiohttp.ClientSession(json_serialize=ujson.dumps)
-
   async with session.ws_connect("wss://ws.kraken.com") as ws:
     # Send websocket subscription to XBT/USD
     print("Setting subscription to Ticker XBT/USD")
@@ -92,17 +99,20 @@ async def run(pair: list):
                                              current_timestamp, response))
             print(f"Tick event type {response[0]} at {current_timestamp} sent!")
         elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
-          break
-    except Exception as error:
-      print("WebSocket failed!")
-      print(error)
-      await producer.stop()
-      await ws.close()
+          try:
+            pong = await ws.ping()
+            await asyncio.wait_for(pong, timeout=5)
+            print("Ping OK, keeping connection alive...")
+            continue
+          except:
+            print('Ping error - retrying connection in 5 sec (Ctrl-C to quit)')
+            await asyncio.sleep(5)
+            break
     finally:
       print("Finally Done with Websocket Connection!")
       await producer.stop()
       await ws.close()
-  await session.close()
+    await session.close()
 
 
 if __name__ == "__main__":

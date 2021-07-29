@@ -6,6 +6,7 @@ import dash_html_components as html
 import dash_bootstrap_components as dbc
 from maindash import app
 import dash
+from pandas.core.frame import DataFrame
 from plotly import graph_objects as go
 from plotly.missing_ipywidgets import FigureWidget
 import pandas as pd
@@ -54,6 +55,7 @@ def render_kraken():
                       dcc.Store(id='intermediate-pair-value-json'),
                       dcc.Store(id="intermediate-cryptopanic-value"),
                       dcc.Store(id="prev-index-time"),
+                      dcc.Store(id="latest-price"),
                       dcc.Interval(id='news-interval',
                                    interval=60 * 1000,
                                    n_intervals=0),
@@ -78,12 +80,20 @@ def render_kraken():
   ])
 
 
-def candlestick_chart(x_series, open, high, low, close):
+def candlestick_chart(df: DataFrame):
+  print("Last index:", df.index[-1])
   fig: FigureWidget = go.Figure(data=[
-      go.Candlestick(x=x_series, open=open, high=high, low=low, close=close)
+      go.Candlestick(x=df.index,
+                     open=df['open'],
+                     high=df['high'],
+                     low=df['low'],
+                     close=df['close']),
+      go.Scatter(x=df.index,
+                 y=df['close'].rolling(5).mean(),
+                 line=dict(color='orange', width=1))
   ])
-  fig.update_layout(width=1100,
-                    height=500,
+  fig.update_layout(width=1080,
+                    height=550,
                     plot_bgcolor='rgba(0,0,0,0)',
                     paper_bgcolor='rgba(0,0,0,0)',
                     font=dict(color="#f0f0f0"),
@@ -115,7 +125,7 @@ def create_list_item(title, url, source_title):
 @app.callback(Output("intermediate-cryptopanic-value", "data"),
               Input("news-interval", "n_intervals"))
 def live_update_news(n):
-  news_data = headline_news(15)
+  news_data = headline_news(10)
   if (n > 0):
     print("News Live Update no.", n)
   else:
@@ -171,14 +181,12 @@ def display_dynamic_dropdown(label):
 
 
 # Define callback for changing trading view to different pairs
-@app.callback([
-    Output("graph", "figure"),
-    Output("graph", "style"),
-], [
-    Input("intermediate-pair", "data"),
-    Input("intermediate-pair-value-json", "data"),
-    State("chart-interval", "n_intervals"),
-])
+@app.callback([Output("graph", "figure"),
+               Output("graph", "style")], [
+                   Input("intermediate-pair", "data"),
+                   Input("intermediate-pair-value-json", "data"),
+                   State("chart-interval", "n_intervals"),
+               ])
 def display_candlestick_by_pair(label, json_value, n):
   ctx = dash.callback_context
   trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
@@ -189,11 +197,7 @@ def display_candlestick_by_pair(label, json_value, n):
     df_closed['datetime'] = pd.to_datetime(df_closed['datetime'])
     df_closed = df_closed.reset_index().set_index('datetime')
     df_closed_ohlc = df_closed['closed_value'].resample('1Min').ohlc()
-    fig = candlestick_chart(x_series=df_closed_ohlc.index,
-                            open=df_closed_ohlc['open'],
-                            high=df_closed_ohlc['high'],
-                            low=df_closed_ohlc['low'],
-                            close=df_closed_ohlc['close'])
+    fig = candlestick_chart(df=df_closed_ohlc)
     print("Successfully updated {} chart".format(label))
     return fig, {"margin-top": "10px", "display": "inline"}
   # If initial fetch on pair
@@ -206,11 +210,7 @@ def display_candlestick_by_pair(label, json_value, n):
   df_closed['datetime'] = pd.to_datetime(df_closed['datetime'])
   df_closed = df_closed.reset_index().set_index('datetime')
   df_closed_ohlc = df_closed['closed_value'].resample('1Min').ohlc()
-  fig = candlestick_chart(x_series=df_closed_ohlc.index,
-                          open=df_closed_ohlc['open'],
-                          high=df_closed_ohlc['high'],
-                          low=df_closed_ohlc['low'],
-                          close=df_closed_ohlc['close'])
+  fig = candlestick_chart(df=df_closed_ohlc)
   return fig, {"margin-top": "10px", "display": "inline"}
 
 
@@ -218,7 +218,8 @@ def display_candlestick_by_pair(label, json_value, n):
 # Define callback for live-update data in a specific interval
 @app.callback([
     Output("intermediate-pair-value-json", "data"),
-    Output("prev-index-time", "data")
+    Output("prev-index-time", "data"),
+    Output("latest-price", "data")
 ], [
     Input("chart-interval", "n_intervals"),
     State("intermediate-pair", "data"),
@@ -226,21 +227,30 @@ def display_candlestick_by_pair(label, json_value, n):
 ])
 def live_update_pair(n, pair, prev_time):
   if (n == 0):
-    return dash.no_update, dash.no_update
+    return dash.no_update, dash.no_update, dash.no_update
   kraken_data = kraken_utils.queryByPair(limit=500,
                                          pair=pair,
                                          col_order="datetime",
                                          sort=SortingType.DESCENDING,
                                          to_dataframe=False)
-  # print(kraken_data, flush=True)
-  # print("Prev Time:", prev_time)
   if (prev_time is not None):
     if (datetime.fromisoformat(str(prev_time)) == kraken_data[0]['datetime']):
-      print("Nothing to Update!")
-      return dash.no_update, prev_time
+      return dash.no_update, prev_time, dash.no_update
   print("Live Update {} of iteration no.".format(pair), n)
+  last_price = kraken_data[0]['closed_value']
   # print(kraken_data)
-  return [json.dumps(kraken_data, default=str), kraken_data[0]['datetime']]
+  return json.dumps(kraken_data,
+                    default=str), kraken_data[0]['datetime'], last_price
 
 
-# TODO: Tomorrow please Test real-time data stream again
+app.clientside_callback(
+    """
+    function(latest_price, pair) {
+      if (typeof latest_price === "undefined") {
+        document.title = pair
+      } else {
+        document.title = latest_price + " " + pair
+      }
+    }
+  """, Output("blank-output", "children"), Input("latest-price", "data"),
+    Input("intermediate-pair", "data"))
