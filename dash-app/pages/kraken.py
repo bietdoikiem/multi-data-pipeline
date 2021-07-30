@@ -1,5 +1,4 @@
 from datetime import datetime
-from time import time
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
@@ -54,18 +53,34 @@ def render_kraken():
                                                    id="ETH/USD-pair",
                                                    children="ETH/USD")
                                            ]),
-                          dbc.DropdownMenu(id="study-dropdown",
-                                           label="Study 📉",
-                                           color="dark",
-                                           style={"display": "inline"},
-                                           children=[
-                                               dbc.InputGroup([
-                                                   dbc.InputGroupAddon(
-                                                       dbc.Checkbox(),
-                                                       addon_type="prepend"),
-                                                   html.P("MA")
-                                               ])
-                                           ])
+                          dbc.DropdownMenu(
+                              id="study-dropdown",
+                              label="Study 📉",
+                              color="dark",
+                              style={"display": "inline"},
+                              children=[
+                                  dcc.Checklist(id="studies-checklist",
+                                                options=[
+                                                    {
+                                                        'label': 'MA',
+                                                        'value': 'ma'
+                                                    },
+                                                    {
+                                                        'label': 'EMA',
+                                                        'value': 'ema'
+                                                    },
+                                                    {
+                                                        'label': 'Bollinger',
+                                                        'value': 'bollinger'
+                                                    },
+                                                ],
+                                                value=[],
+                                                style={
+                                                    "margin-left": "10px",
+                                                    "color": "#f0f0f0",
+                                                },
+                                                labelStyle={"display": "block"})
+                              ])
                       ],
                                style={"display": "inline"}),
                       dcc.Graph(id="graph",
@@ -90,7 +105,7 @@ def render_kraken():
                   md=12,
                   lg=7,
                   xs=12),
-          dbc.Col([html.Div([html.H2("Bid/Ask 🏷️")], className="col-elem")],
+          dbc.Col([html.Div([html.H2("Ask/Bid 🏷️")], className="col-elem")],
                   width=2,
                   md=12,
                   lg=2,
@@ -147,10 +162,11 @@ def study_factory(df: DataFrame, study_type: str = None):
     raise "Please provide one study type!"
   # Factory conditions #
   if (study_type == "ma"):
-    print("Updating MovingAverage")
-    return moving_average_trace(df, days=5)
+    return moving_average_trace(df, window_size=5)
   elif (study_type == "ema"):
-    return exponential_moving_average_trace(df, days=20)
+    return exponential_moving_average_trace(df, window_size=20)
+  elif (study_type == "bollinger"):
+    return bollinger_trace(df, window_size=10, num_of_std=5)
   else:
     raise "Please provide a valid chart study type!"
 
@@ -171,29 +187,73 @@ def chart_factory(df: DataFrame,
                        open=df['open'],
                        high=df['high'],
                        low=df['low'],
-                       close=df['close'])
+                       close=df['close'],
+                       showlegend=False,
+                       name="Chart")
     ]
     if (len(traces) > 0):
       for trace in traces:
-        chart_data.append(trace)
+        # Check if one trace contain multiple sub-traces
+        if (isinstance(trace, list)):
+          for subtrace in trace:
+            chart_data.append(subtrace)
+        else:
+          chart_data.append(trace)
     return candlestick_chart(chart_data)
   return None
 
 
 #### Kraken Utility functions & callbacks ####
-def moving_average_trace(df: DataFrame, days=5):
+# Technical Indicators #
+def moving_average_trace(df: DataFrame, window_size=5):
   return go.Scatter(x=df.index,
-                    y=df['close'].rolling(days, min_periods=1).mean(),
-                    line=dict(color='orange', width=1))
+                    y=df['close'].rolling(window_size, min_periods=1).mean(),
+                    showlegend=False,
+                    name="MA",
+                    line=dict(color='#FFD580', width=1))
 
 
-def exponential_moving_average_trace(df: DataFrame, days=20):
+def exponential_moving_average_trace(df: DataFrame, window_size=20):
   return go.Scatter(x=df.index,
-                    y=df['close'].ewm(span=days,
+                    y=df['close'].ewm(span=window_size,
                                       min_periods=0,
                                       adjust=False,
                                       ignore_na=False).mean(),
-                    line=dict(color='blue', width=1))
+                    showlegend=False,
+                    name="EMA",
+                    line=dict(color='#ADD8E6', width=1))
+
+
+# Bollinger Bands
+def bollinger_trace(df: DataFrame, window_size=10, num_of_std=5):
+  price = df["close"]
+  rolling_mean = price.rolling(window=window_size, min_periods=1).mean()
+  rolling_std = price.rolling(window=window_size, min_periods=1).std()
+  upper_band = rolling_mean + (rolling_std * num_of_std)
+  lower_band = rolling_mean - (rolling_std * num_of_std)
+
+  trace = go.Scatter(x=df.index,
+                     y=upper_band,
+                     mode="lines",
+                     showlegend=False,
+                     name="BB_upper",
+                     line=dict(width=1))
+
+  trace2 = go.Scatter(x=df.index,
+                      y=rolling_mean,
+                      mode="lines",
+                      showlegend=False,
+                      name="BB_mean",
+                      line=dict(width=1))
+
+  trace3 = go.Scatter(x=df.index,
+                      y=lower_band,
+                      mode="lines",
+                      showlegend=False,
+                      name="BB_lower",
+                      line=dict(width=1))
+
+  return [trace, trace2, trace3]
 
 
 def candlestick_chart(data):
@@ -245,9 +305,10 @@ def preprocess_ohlc(df: DataFrame, column=None, parse_datetime=False):
                Output("graph", "style")], [
                    Input("intermediate-pair", "data"),
                    Input("intermediate-pair-value-json", "data"),
+                   Input("studies-checklist", "value"),
                    State("chart-interval", "n_intervals"),
                ])
-def display_candlestick_by_pair(label, json_value, n):
+def display_candlestick_by_pair(label, json_value, studies, _):
   ctx = dash.callback_context
   trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
   # If update
@@ -258,22 +319,22 @@ def display_candlestick_by_pair(label, json_value, n):
                                      parse_datetime=True)
     fig = chart_factory(df=df_closed_ohlc,
                         chart_type="candlestick",
-                        studies=["ma", "ema"])
+                        studies=studies)
     print("Successfully updated {} chart".format(label))
     return fig, {"margin-top": "10px", "display": "inline"}
   # If initial fetch on pair
-  df_closed = kraken_utils.queryByPair(limit=1000,
+  df_closed = kraken_utils.queryByPair(limit=2000,
                                        pair=label,
                                        col_order="datetime",
                                        sort=SortingType.DESCENDING,
                                        to_dataframe=True)
-  print("=> Switched to chart {}".format(label))
+  print("=> Refresh {} chart".format(label))
   df_closed_ohlc = preprocess_ohlc(df_closed,
                                    column="closed_value",
                                    parse_datetime=True)
   fig = chart_factory(df=df_closed_ohlc,
                       chart_type="candlestick",
-                      studies=["ma", "ema"])
+                      studies=studies)
   return fig, {"margin-top": "10px", "display": "inline"}
 
 
@@ -290,7 +351,7 @@ def display_candlestick_by_pair(label, json_value, n):
 def live_update_pair(n, pair, prev_time):
   if (n == 0):
     return dash.no_update, dash.no_update, dash.no_update
-  kraken_data = kraken_utils.queryByPair(limit=1000,
+  kraken_data = kraken_utils.queryByPair(limit=2000,
                                          pair=pair,
                                          col_order="datetime",
                                          sort=SortingType.DESCENDING,
