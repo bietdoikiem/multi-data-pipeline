@@ -54,6 +54,24 @@ def render_kraken():
                                                    children="ETH/USD")
                                            ]),
                           dbc.DropdownMenu(
+                              id="time-dropdown",
+                              label="1Min",
+                              color="dark",
+                              style={
+                                  "display": "inline",
+                                  "margin-right": "10px"
+                              },
+                              children=[
+                                  dbc.DropdownMenuItem(
+                                      id="1Min",
+                                      children="1Min",
+                                      className="dropdown-item"),
+                                  dbc.DropdownMenuItem(id="5Min",
+                                                       children="5Min"),
+                                  dbc.DropdownMenuItem(id="1Hour",
+                                                       children="1Hour"),
+                              ]),
+                          dbc.DropdownMenu(
                               id="study-dropdown",
                               label="Study 📉",
                               color="dark",
@@ -72,6 +90,10 @@ def render_kraken():
                                                     {
                                                         'label': 'Bollinger',
                                                         'value': 'bollinger'
+                                                    },
+                                                    {
+                                                        'label': 'Ichimoku',
+                                                        'value': 'ichimoku'
                                                     },
                                                 ],
                                                 value=[],
@@ -167,6 +189,8 @@ def study_factory(df: DataFrame, study_type: str = None):
     return exponential_moving_average_trace(df, window_size=20)
   elif (study_type == "bollinger"):
     return bollinger_trace(df, window_size=10, num_of_std=5)
+  elif (study_type == "ichimoku"):
+    return ichimoku_cloud_trace(df)
   else:
     raise "Please provide a valid chart study type!"
 
@@ -232,12 +256,12 @@ def bollinger_trace(df: DataFrame, window_size=10, num_of_std=5):
   upper_band = rolling_mean + (rolling_std * num_of_std)
   lower_band = rolling_mean - (rolling_std * num_of_std)
 
-  trace = go.Scatter(x=df.index,
-                     y=upper_band,
-                     mode="lines",
-                     showlegend=False,
-                     name="BB_upper",
-                     line=dict(width=1))
+  trace1 = go.Scatter(x=df.index,
+                      y=upper_band,
+                      mode="lines",
+                      showlegend=False,
+                      name="BB_upper",
+                      line=dict(width=1))
 
   trace2 = go.Scatter(x=df.index,
                       y=rolling_mean,
@@ -253,7 +277,69 @@ def bollinger_trace(df: DataFrame, window_size=10, num_of_std=5):
                       name="BB_lower",
                       line=dict(width=1))
 
-  return [trace, trace2, trace3]
+  return [trace1, trace2, trace3]
+
+
+def ichimoku_cloud_trace(df: DataFrame):
+  # Tenkan-sen (Conversion Line): (9-period high + 9-period low)/2))
+  period9_high = df['high'].rolling(window=9, min_periods=1).max()
+  period9_low = df['low'].rolling(window=9).min()
+  tenkan_sen = (period9_high + period9_low) / 2
+
+  # Kijun-sen (Base Line): (26-period high + 26-period low)/2))
+  period26_high = df['high'].rolling(window=26, min_periods=1).max()
+  period26_low = df['low'].rolling(window=26, min_periods=1).min()
+  kijun_sen = (period26_high + period26_low) / 2
+
+  # Senkou Span A (Leading Span A): (Conversion Line + Base Line)/2))
+  senkou_span_a = ((tenkan_sen + kijun_sen) / 2).shift(26)
+
+  # Senkou Span B (Leading Span B): (52-period high + 52-period low)/2))
+  period52_high = df['high'].rolling(window=52, min_periods=1).max()
+  period52_low = df['low'].rolling(window=52, min_periods=1).min()
+  senkou_span_b = ((period52_high + period52_low) / 2).shift(26)
+
+  # The most current closing price plotted 22 time periods behind (optional)
+  chikou_span = df['close'].shift(-22)    # Given at Trading View.
+
+  trace1 = go.Scatter(x=df.index,
+                      y=tenkan_sen,
+                      mode="lines",
+                      showlegend=False,
+                      name="Tenkan_Sen",
+                      line=dict(width=1))
+
+  trace2 = go.Scatter(x=df.index,
+                      y=kijun_sen,
+                      mode="lines",
+                      showlegend=False,
+                      name="Kijun_Sen",
+                      line=dict(width=1))
+
+  trace3 = go.Scatter(x=df.index,
+                      y=senkou_span_a,
+                      mode="lines",
+                      showlegend=False,
+                      name="Senkou_Span_A",
+                      line=dict(color="green", width=1))
+  trace4 = go.Scatter(x=df.index,
+                      y=senkou_span_b,
+                      mode="lines",
+                      showlegend=False,
+                      name="Senkou_Span_B",
+                      line=dict(color="red", width=1))
+  trace5 = go.Scatter(x=df.index,
+                      y=chikou_span,
+                      mode="lines",
+                      showlegend=False,
+                      name="Chikou_Span",
+                      line=dict(color="pink", width=1))
+  # df['blue_line'] = tenkan_sen
+  # df['red_line'] = kijun_sen
+  # df['cloud_green_line_a'] = senkou_span_a
+  # df['cloud_red_line_b'] = senkou_span_b
+  # df['lagging_line'] = chikou_span
+  return [trace1, trace2, trace3, trace4, trace5]
 
 
 def candlestick_chart(data):
@@ -271,6 +357,21 @@ def candlestick_chart(data):
 
 
 # Define callback for XBT/USD and ETH/USD dropdown selection
+@app.callback(Output("intermediate-pair", "data"),
+              Input("XBT/USD-pair", "n_clicks"),
+              Input("ETH/USD-pair", "n_clicks"))
+def store_dropdown_value(*_):
+  ctx = dash.callback_context
+  if not ctx.triggered:
+    button_id = "XBT/USD"
+  else:
+    button_id: str = ctx.triggered[0]['prop_id'].split('.')[0]
+    # Remove the pair word
+    button_id = button_id.split("-")[0]
+  return button_id
+
+
+# Define callback for Timeframe dropdown selection
 @app.callback(Output("intermediate-pair", "data"),
               Input("XBT/USD-pair", "n_clicks"),
               Input("ETH/USD-pair", "n_clicks"))
@@ -323,7 +424,7 @@ def display_candlestick_by_pair(label, json_value, studies, _):
     print("Successfully updated {} chart".format(label))
     return fig, {"margin-top": "10px", "display": "inline"}
   # If initial fetch on pair
-  df_closed = kraken_utils.queryByPair(limit=2000,
+  df_closed = kraken_utils.queryByPair(limit=3000,
                                        pair=label,
                                        col_order="datetime",
                                        sort=SortingType.DESCENDING,
@@ -351,7 +452,7 @@ def display_candlestick_by_pair(label, json_value, studies, _):
 def live_update_pair(n, pair, prev_time):
   if (n == 0):
     return dash.no_update, dash.no_update, dash.no_update
-  kraken_data = kraken_utils.queryByPair(limit=2000,
+  kraken_data = kraken_utils.queryByPair(limit=3000,
                                          pair=pair,
                                          col_order="datetime",
                                          sort=SortingType.DESCENDING,

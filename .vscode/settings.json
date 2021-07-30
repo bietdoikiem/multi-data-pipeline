@@ -2,6 +2,8 @@
 	"python.linting.pylintEnabled": true,
 	"python.linting.enabled": true,
 	"cSpell.words": [
+		"Ichimoku",
+		"Kijun",
 		"OLAP",
 		"Xtreme",
 		"aiohttp",
@@ -10,12 +12,14 @@
 		"bgcolor",
 		"cassandradb",
 		"cassandrautils",
+		"chikou",
 		"cqlquery",
 		"gaierror",
 		"ipywidgets",
 		"ohlc",
 		"pylint",
 		"rgba",
+		"senkou",
 		"ujson",
 		"xaxis",
 		"yaxis"
