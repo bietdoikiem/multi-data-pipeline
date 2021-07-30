@@ -375,7 +375,7 @@ def store_dropdown_value(*_):
 @app.callback(Output("intermediate-pair", "data"),
               Input("XBT/USD-pair", "n_clicks"),
               Input("ETH/USD-pair", "n_clicks"))
-def store_dropdown_value(*_):
+def store_time_dropdown_value(*_):
   ctx = dash.callback_context
   if not ctx.triggered:
     button_id = "XBT/USD"
