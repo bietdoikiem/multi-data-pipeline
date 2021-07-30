@@ -16,6 +16,7 @@
 		"cqlquery",
 		"gaierror",
 		"ipywidgets",
+		"numpy",
 		"ohlc",
 		"pylint",
 		"rgba",
