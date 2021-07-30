@@ -10,6 +10,7 @@ services:
     environment:
       KAFKA_BROKER_URL: broker:9092
       TOPIC_NAME: cryptopanic
+      SLEEP_TIME: 1800
 
 networks:
   default:

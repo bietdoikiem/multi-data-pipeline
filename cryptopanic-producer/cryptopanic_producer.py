@@ -1,3 +1,4 @@
+from asyncio.windows_events import ERROR_CONNECTION_ABORTED
 from datetime import datetime
 import time
 import os
@@ -13,7 +14,7 @@ import asyncio
 KAFKA_BROKER_URL = os.environ.get("KAFKA_BROKER_URL")
 TOPIC_NAME = os.environ.get("TOPIC_NAME") if os.environ.get(
     "TOPIC_NAME") else "cryptopanic"
-SLEEP_TIME = int(os.environ.get("SLEEP_TIME", 30))
+SLEEP_TIME = int(os.environ.get("SLEEP_TIME"))
 
 # CryptoPanic API Key
 config = configparser.ConfigParser()
@@ -35,7 +36,7 @@ async def send_many(producer: AIOKafkaProducer,
       data_dict = vars(data)
       await producer.send_and_wait(TOPIC_NAME, value=data_dict)
       print("=> News no.", iterator, "sent")
-      await asyncio.sleep(1)
+      await asyncio.sleep(0.8)
 
 
 async def main():
@@ -83,5 +84,15 @@ async def main():
     await producer.stop()
 
 
+def main_run_forever():
+  while True:
+    try:
+      asyncio.run(main())
+      print("Finished! Sleeping and waiting for another call!")
+      time.sleep(SLEEP_TIME)
+    except Exception:
+      break
+
+
 if __name__ == "__main__":
-  asyncio.run(main())
+  main_run_forever()

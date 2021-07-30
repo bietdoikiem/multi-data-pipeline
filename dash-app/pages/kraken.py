@@ -311,7 +311,7 @@ def ichimoku_cloud_trace(df: DataFrame):
                       mode="lines",
                       showlegend=False,
                       name="Tenkan_Sen",
-                      line=dict(width=1))
+                      line=dict(color="orange", width=1))
 
   trace2 = go.Scatter(x=df.index,
                       y=kijun_sen,
@@ -386,6 +386,7 @@ def display_dynamic_dropdown(label):
 @app.callback(Output("intermediate-timeframe", "data"), [
     Input("1Min", "n_clicks"),
     Input("5Min", "n_clicks"),
+    Input("30Min", "n_clicks"),
     Input("1Hour", "n_clicks")
 ])
 def store_timeframe_dropdown_value(*_):
@@ -394,7 +395,7 @@ def store_timeframe_dropdown_value(*_):
     button_id = "1Min"
   else:
     button_id: str = ctx.triggered[0]['prop_id'].split('.')[0]
-    # Since pandas only allow 1H interval for 1
+    # Since pandas only allow 1H interval for Hourly
     if (button_id == "1Hour"):
       button_id = "1H"
   return button_id
