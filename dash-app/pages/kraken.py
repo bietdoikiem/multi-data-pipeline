@@ -1,4 +1,5 @@
 from datetime import datetime
+from time import time
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
@@ -54,7 +55,7 @@ def render_kraken():
                                                    children="ETH/USD")
                                            ]),
                           dbc.DropdownMenu(
-                              id="time-dropdown",
+                              id="timeframe-dropdown",
                               label="1Min",
                               color="dark",
                               style={
@@ -68,6 +69,8 @@ def render_kraken():
                                       className="dropdown-item"),
                                   dbc.DropdownMenuItem(id="5Min",
                                                        children="5Min"),
+                                  dbc.DropdownMenuItem(id="30Min",
+                                                       children="30Min"),
                                   dbc.DropdownMenuItem(id="1Hour",
                                                        children="1Hour"),
                               ]),
@@ -109,6 +112,7 @@ def render_kraken():
                                 style={"display": "none"},
                                 config={'displayModeBar': False}),
                       dcc.Store(id='intermediate-pair'),
+                      dcc.Store(id='intermediate-timeframe'),
                       dcc.Store(id='intermediate-pair-value-json'),
                       dcc.Store(id="intermediate-cryptopanic-value"),
                       dcc.Store(id="prev-index-time"),
@@ -371,21 +375,6 @@ def store_dropdown_value(*_):
   return button_id
 
 
-# Define callback for Timeframe dropdown selection
-@app.callback(Output("intermediate-pair", "data"),
-              Input("XBT/USD-pair", "n_clicks"),
-              Input("ETH/USD-pair", "n_clicks"))
-def store_time_dropdown_value(*_):
-  ctx = dash.callback_context
-  if not ctx.triggered:
-    button_id = "XBT/USD"
-  else:
-    button_id: str = ctx.triggered[0]['prop_id'].split('.')[0]
-    # Remove the pair word
-    button_id = button_id.split("-")[0]
-  return button_id
-
-
 # Define callback for XBT/USD and ETH/USD dropdown selection
 @app.callback(Output("chart-dropdown", "label"),
               Input("intermediate-pair", "data"))
@@ -393,11 +382,40 @@ def display_dynamic_dropdown(label):
   return label
 
 
-def preprocess_ohlc(df: DataFrame, column=None, parse_datetime=False):
+# Define callback for Timeframe dropdown selection
+@app.callback(Output("intermediate-timeframe", "data"), [
+    Input("1Min", "n_clicks"),
+    Input("5Min", "n_clicks"),
+    Input("1Hour", "n_clicks")
+])
+def store_timeframe_dropdown_value(*_):
+  ctx = dash.callback_context
+  if not ctx.triggered:
+    button_id = "1Min"
+  else:
+    button_id: str = ctx.triggered[0]['prop_id'].split('.')[0]
+    # Since pandas only allow 1H interval for 1
+    if (button_id == "1Hour"):
+      button_id = "1H"
+  return button_id
+
+
+# Define callback for Timeframme dropdown selection
+@app.callback(Output("timeframe-dropdown", "label"),
+              Input("intermediate-timeframe", "data"))
+def display_dynamic_timeframe_dropdown(label):
+  return label
+
+
+def preprocess_ohlc(df: DataFrame,
+                    column=None,
+                    parse_datetime=False,
+                    freq="1Min"):
+
   if (parse_datetime == True):
     df['datetime'] = pd.to_datetime(df['datetime'])
   df_ohlc = df.reset_index().set_index('datetime')
-  df_ohlc = df_ohlc[column].resample('1Min').ohlc()
+  df_ohlc = df_ohlc[column].resample(freq).ohlc()
   return df_ohlc
 
 
@@ -407,9 +425,10 @@ def preprocess_ohlc(df: DataFrame, column=None, parse_datetime=False):
                    Input("intermediate-pair", "data"),
                    Input("intermediate-pair-value-json", "data"),
                    Input("studies-checklist", "value"),
+                   Input("intermediate-timeframe", "data"),
                    State("chart-interval", "n_intervals"),
                ])
-def display_candlestick_by_pair(label, json_value, studies, _):
+def display_candlestick_by_pair(label, json_value, studies, timeframe, *_):
   ctx = dash.callback_context
   trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
   # If update
@@ -417,14 +436,15 @@ def display_candlestick_by_pair(label, json_value, studies, _):
     df_closed = pd.DataFrame(json.loads(json_value))
     df_closed_ohlc = preprocess_ohlc(df_closed,
                                      column="closed_value",
-                                     parse_datetime=True)
+                                     parse_datetime=True,
+                                     freq=timeframe)
     fig = chart_factory(df=df_closed_ohlc,
                         chart_type="candlestick",
                         studies=studies)
     print("Successfully updated {} chart".format(label))
     return fig, {"margin-top": "10px", "display": "inline"}
   # If initial fetch on pair
-  df_closed = kraken_utils.queryByPair(limit=3000,
+  df_closed = kraken_utils.queryByPair(limit=6000,
                                        pair=label,
                                        col_order="datetime",
                                        sort=SortingType.DESCENDING,
@@ -432,7 +452,8 @@ def display_candlestick_by_pair(label, json_value, studies, _):
   print("=> Refresh {} chart".format(label))
   df_closed_ohlc = preprocess_ohlc(df_closed,
                                    column="closed_value",
-                                   parse_datetime=True)
+                                   parse_datetime=True,
+                                   freq=timeframe)
   fig = chart_factory(df=df_closed_ohlc,
                       chart_type="candlestick",
                       studies=studies)
@@ -452,7 +473,7 @@ def display_candlestick_by_pair(label, json_value, studies, _):
 def live_update_pair(n, pair, prev_time):
   if (n == 0):
     return dash.no_update, dash.no_update, dash.no_update
-  kraken_data = kraken_utils.queryByPair(limit=3000,
+  kraken_data = kraken_utils.queryByPair(limit=6000,
                                          pair=pair,
                                          col_order="datetime",
                                          sort=SortingType.DESCENDING,
