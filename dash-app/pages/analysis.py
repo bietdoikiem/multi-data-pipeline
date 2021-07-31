@@ -2,6 +2,7 @@ from dash.dependencies import Input, Output
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
+from dash_html_components.H2 import H2
 from maindash import app
 import json
 import numpy as np
@@ -42,17 +43,39 @@ s3 = boto3.resource('s3')
 def render_analysis():
   return html.Div(children=[
       dbc.Container(children=[
-          html.H2("Word Cloud"),
+          html.H2("Word Cloud ☁️"),
           html.Div(children=[
-              dcc.Loading(id="loading-img",
-                          children=[
-                              html.Img(id="word-cloud",
-                                       src="",
-                                       style={
-                                           "height": "90vh",
-                                           "margin-bottom": "10px"
-                                       })
-                          ])
+              html.Div(children=[
+                  dcc.Loading(id="loading-img",
+                              children=[
+                                  html.Img(id="word-cloud",
+                                           src="",
+                                           style={
+                                               "height": "90vh",
+                                               "margin-bottom": "10px"
+                                           })
+                              ])
+              ],
+                       style={
+                           "display": "block",
+                           "marginLeft": "auto",
+                           "marginRight": "auto",
+                           "width": "60%"
+                       }),
+              html.Div(children=[
+                  html.H2("Analysis ✒️"),
+                  dbc.InputGroup(
+                      [
+                          dbc.Textarea(placeholder="Type your analysis here...",
+                                       style={"height": "300px"}),
+                          dbc.InputGroupAddon(
+                              children=[dbc.Button("Submit", color="dark")],
+                              addon_type="append")
+                      ],
+                      className="mb-3",
+                  )
+              ],
+                       className="mt-3"),
           ]),
           dcc.Store(id="all-cryptopanic-data"),
           dcc.Interval(

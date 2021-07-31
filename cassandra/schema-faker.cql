@@ -34,3 +34,12 @@ CREATE TABLE IF NOT EXISTS kraken_tick_data (
   PRIMARY KEY(pair, datetime)
 )
 WITH CLUSTERING ORDER BY (datetime DESC);
+
+CREATE TABLE IF NOT EXISTS analysis_report (
+  datetime TIMESTAMP,
+  analysis TEXT,
+  url TEXT,
+  category TEXT,
+  PRIMARY KEY(category, datetime)
+)
+WITH CLUSTERING ORDER BY (datetime DESC);
