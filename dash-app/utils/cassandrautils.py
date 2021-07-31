@@ -115,7 +115,8 @@ class CryptoPanicQueryUtils(QueryUtils):
             cursor=None,
             col_cursor=None,
             col_order=None,
-            to_dataframe=False):
+            to_dataframe=False,
+            categories=["news"]):
     # Setup cassandra connection and query type
     self.session.row_factory = ordered_dict_factory
     # Check condition if sort
@@ -125,8 +126,8 @@ class CryptoPanicQueryUtils(QueryUtils):
     CQL_QUERY = f"""
     SELECT * 
     FROM {self.table}
-    {"WHERE kind = 'news'" if cursor == None else ""}    
-    {"WHERE kind = 'news' AND {} <= {}".format(col_cursor, cursor) if cursor != None else ""}
+    {"WHERE kind IN({}) ".format(", ".join([dollar_quote(c) for c in categories])) if cursor == None else ""}    
+    {"WHERE kind IN('news') AND {} <= {}".format(col_cursor, cursor) if cursor != None else ""}
     {"ORDER BY {} {}".format(col_order, sort) if col_order != None and sort != None else ""}
     {"LIMIT {}".format(limit) if limit != None else ""}
     ;
@@ -140,3 +141,7 @@ class CryptoPanicQueryUtils(QueryUtils):
       return pd.DataFrame(rows)
     # rows = self.session.execute(CQL_QUERY)
     return [dict(row) for row in rows.all()]
+
+
+def dollar_quote(string):
+  return "$${}$$".format(string)

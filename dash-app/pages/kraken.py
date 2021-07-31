@@ -117,7 +117,7 @@ def render_kraken():
                       dcc.Store(id="prev-index-time"),
                       dcc.Store(id="latest-price"),
                       dcc.Interval(id='news-interval',
-                                   interval=1800 * 1000,
+                                   interval=3600 * 1000,
                                    n_intervals=0),
                       dcc.Interval(
                           id='chart-interval', interval=5 * 1000, n_intervals=0)
@@ -143,7 +143,7 @@ def render_kraken():
 #### CryptoPanic Utility functions & callbacks ####
 def headline_news(top: str = 10):
   print("=> News fetching...")
-  return cryptopanic_utils.query(limit=top)
+  return cryptopanic_utils.query(limit=top, categories=["news"])
 
 
 def create_list_item(title, url, source_title):

@@ -10,6 +10,7 @@
 		"aiokafka",
 		"asyncio",
 		"bgcolor",
+		"boto",
 		"cassandradb",
 		"cassandrautils",
 		"chikou",
