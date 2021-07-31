@@ -15,5 +15,5 @@ volumes:
 
 networks:
   default:
-    external:
-      name: cassandra-network
+    external: true
+    name: cassandra-network

@@ -77,8 +77,8 @@ services:
 
 networks:
   default:
-    external:
-      name: kafka-network
+    external: true
+    name: kafka-network
   secondary:
-    external:
-      name: cassandra-network
+    external: true
+    name: cassandra-network

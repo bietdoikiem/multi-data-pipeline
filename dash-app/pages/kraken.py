@@ -1,5 +1,4 @@
 from datetime import datetime
-from time import time
 from dash.dependencies import Input, Output, State
 import dash_core_components as dcc
 import dash_html_components as html
@@ -118,7 +117,7 @@ def render_kraken():
                       dcc.Store(id="prev-index-time"),
                       dcc.Store(id="latest-price"),
                       dcc.Interval(id='news-interval',
-                                   interval=60 * 1000,
+                                   interval=1800 * 1000,
                                    n_intervals=0),
                       dcc.Interval(
                           id='chart-interval', interval=5 * 1000, n_intervals=0)
@@ -202,7 +201,8 @@ def study_factory(df: DataFrame, study_type: str = None):
 # Chart Creator
 def chart_factory(df: DataFrame,
                   chart_type="candlestick",
-                  studies: list = None):
+                  studies: list = None,
+                  pair=None):
   traces = []
   # Trace of study process
   if (studies != None and len(studies) > 0):
@@ -227,7 +227,7 @@ def chart_factory(df: DataFrame,
             chart_data.append(subtrace)
         else:
           chart_data.append(trace)
-    return candlestick_chart(chart_data)
+    return candlestick_chart(chart_data, pair=pair)
   return None
 
 
@@ -346,7 +346,7 @@ def ichimoku_cloud_trace(df: DataFrame):
   return [trace1, trace2, trace3, trace4, trace5]
 
 
-def candlestick_chart(data):
+def candlestick_chart(data, pair):
   fig: FigureWidget = go.Figure(data=data)
   fig.update_layout(width=1080,
                     height=550,
@@ -356,7 +356,8 @@ def candlestick_chart(data):
                     yaxis=dict(gridcolor="rgba(72, 72, 72, 1)"),
                     xaxis=dict(gridcolor="rgba(72, 72, 72, 1)"),
                     xaxis_rangeslider_visible=False,
-                    margin=dict(l=20, r=20, b=10, t=10))
+                    margin=dict(l=20, r=20, b=10, t=10),
+                    uirevision=pair)
   return fig
 
 
@@ -441,7 +442,8 @@ def display_candlestick_by_pair(label, json_value, studies, timeframe, *_):
                                      freq=timeframe)
     fig = chart_factory(df=df_closed_ohlc,
                         chart_type="candlestick",
-                        studies=studies)
+                        studies=studies,
+                        pair=label)
     print("Successfully updated {} chart".format(label))
     return fig, {"margin-top": "10px", "display": "inline"}
   # If initial fetch on pair
@@ -457,7 +459,8 @@ def display_candlestick_by_pair(label, json_value, studies, timeframe, *_):
                                    freq=timeframe)
   fig = chart_factory(df=df_closed_ohlc,
                       chart_type="candlestick",
-                      studies=studies)
+                      studies=studies,
+                      pair=label)
   return fig, {"margin-top": "10px", "display": "inline"}
 
 

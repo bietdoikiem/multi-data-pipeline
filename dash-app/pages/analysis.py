@@ -58,13 +58,13 @@ def live_update_news(n):
 
 
 # FIXME: ERROR embedding wordcloud images to web
-@app.callback([Output("word-cloud", "src")],
-              [Input("all-cryptopanic-data", "data")])
-def draw_word_cloud_news(json_data):
-  data = json.loads(json_data)
-  all_titles = " ".join([sub_data['title'] for sub_data in data])
-  word_cloud = wc.generate(all_titles)
-  img = BytesIO()
-  word_cloud.to_image().save(img, format='PNG')
-  return 'data:image/png;base64,{}'.format(
-      base64.b64encode(img.getvalue()).decode())
+# @app.callback([Output("word-cloud", "src")],
+#               [Input("all-cryptopanic-data", "data")])
+# def draw_word_cloud_news(json_data):
+#   data = json.loads(json_data)
+#   all_titles = " ".join([sub_data['title'] for sub_data in data])
+#   word_cloud = wc.generate(all_titles)
+#   img = BytesIO()
+#   word_cloud.to_image().save(img, format='PNG')
+#   return 'data:image/png;base64,{}'.format(
+#       base64.b64encode(img.getvalue()).decode())
