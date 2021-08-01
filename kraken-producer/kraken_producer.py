@@ -66,53 +66,68 @@ async def run(pair: list):
     print("Kafka Producer failed to start! Exitting application...")
     await producer.stop()
     sys.exit(1)
-  # Open websocket connection and subscribe to ticker feed for XBT/USD
-  session = aiohttp.ClientSession(json_serialize=ujson.dumps)
-  async with session.ws_connect("wss://ws.kraken.com") as ws:
-    # Send websocket subscription to XBT/USD
-    print("Setting subscription to Ticker XBT/USD")
-    try:
-      await ws.send_json(
-          {
-              "event": "subscribe",
-              "pair": pair,
-              "subscription": {
-                  "name": "ticker"
-              }
-          },
-          dumps=ujson.dumps)
+  shutdown = False
+  # Open forever websocket connection and subscribe to ticker feed for XBT/USD
+  while (shutdown == False):
+    session = aiohttp.ClientSession(json_serialize=ujson.dumps)
+    async with session.ws_connect("wss://ws.kraken.com") as ws:
+      # Send websocket subscription to XBT/USD
+      print("Setting subscription to Ticker XBT/USD")
+      try:
+        await ws.send_json(
+            {
+                "event": "subscribe",
+                "pair": pair,
+                "subscription": {
+                    "name": "ticker"
+                }
+            },
+            dumps=ujson.dumps)
+        await asyncio.sleep(1)
+      except Exception as error:
+        print("WebSocket subscription/request failed!")
+        print(error)
+        ws.close()
+        sys.exit(1)
+      # Keep connection to retrieve data from ticker Kraken API
+      try:
+        async for msg in ws:
+          if msg.type == aiohttp.WSMsgType.TEXT:
+            current_timestamp = datetime.utcnow().timestamp()
+            response = ujson.loads(msg.data)
+            if (isinstance(response, list)):
+              await producer.send_and_wait(TOPIC_NAME,
+                                           value=timestamp_response(
+                                               current_timestamp, response))
+              print(
+                  f"Tick event type {response[0]} at {current_timestamp} sent!")
+          elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
+            try:
+              pong = await ws.ping()
+              await asyncio.wait_for(pong, timeout=5)
+              print("Ping OK, keeping connection alive...")
+              continue
+            except:
+              print(
+                  'Ping error - retrying connection in 5 sec (Ctrl-C to quit)')
+              await asyncio.sleep(5)
+              break
+      except (asyncio.CancelledError, aiohttp.ClientError):
+        print("Client disconnected from Websocket!")
+        break
+      except KeyboardInterrupt:
+        shutdown = True
+        print("Finally Done with Websocket Connection!")
+        break
+      finally:
+        await producer.stop()
+        await ws.close()
+      await session.close()
+      if (shutdown == False):
+        print("Attempting to reconnect...")
+      else:
+        print("Shutting down Websocket connection...")
       await asyncio.sleep(1)
-    except Exception as error:
-      print("WebSocket subscription/request failed!")
-      print(error)
-      ws.close()
-      sys.exit(1)
-    # Keep connection to retrieve data from ticker Kraken API
-    try:
-      async for msg in ws:
-        if msg.type == aiohttp.WSMsgType.TEXT:
-          current_timestamp = datetime.utcnow().timestamp()
-          response = ujson.loads(msg.data)
-          if (isinstance(response, list)):
-            await producer.send_and_wait(TOPIC_NAME,
-                                         value=timestamp_response(
-                                             current_timestamp, response))
-            print(f"Tick event type {response[0]} at {current_timestamp} sent!")
-        elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
-          try:
-            pong = await ws.ping()
-            await asyncio.wait_for(pong, timeout=5)
-            print("Ping OK, keeping connection alive...")
-            continue
-          except:
-            print('Ping error - retrying connection in 5 sec (Ctrl-C to quit)')
-            await asyncio.sleep(5)
-            break
-    finally:
-      print("Finally Done with Websocket Connection!")
-      await producer.stop()
-      await ws.close()
-    await session.close()
 
 
 if __name__ == "__main__":

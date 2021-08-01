@@ -116,11 +116,13 @@ def render_kraken():
                       dcc.Store(id="intermediate-cryptopanic-value"),
                       dcc.Store(id="prev-index-time"),
                       dcc.Store(id="latest-price"),
+                      dcc.Store(id="last-ask"),
+                      dcc.Store(id="last-bid"),
                       dcc.Interval(id='news-interval',
                                    interval=3600 * 1000,
                                    n_intervals=0),
                       dcc.Interval(
-                          id='chart-interval', interval=5 * 1000, n_intervals=0)
+                          id='chart-interval', interval=3 * 1000, n_intervals=0)
                   ],
                            className="inner-box"),
               ],
@@ -130,7 +132,23 @@ def render_kraken():
                   md=12,
                   lg=7,
                   xs=12),
-          dbc.Col([html.Div([html.H2("Ask/Bid 🏷️")], className="col-elem")],
+          dbc.Col(children=[
+              html.Div(children=[
+                  html.H2("Ask/Bid 🏷️"),
+                  dbc.Row(children=[
+                      dbc.Col(html.H4("💱"), width=4),
+                      dbc.Col(html.H4("Ask ❓"), width=4),
+                      dbc.Col(html.H4("Bid 🙏"), width=4)
+                  ],
+                          className="mb-2"),
+                  dbc.Row(children=[
+                      dbc.Col(html.P(id="ask-bid-pair", children=""), width=4),
+                      dbc.Col(html.P(id="ask-price", children=""), width=4),
+                      dbc.Col(html.P(id="bid-price", children=""), width=4)
+                  ])
+              ],
+                       className="col-elem")
+          ],
                   width=2,
                   md=12,
                   lg=2,
@@ -287,7 +305,7 @@ def bollinger_trace(df: DataFrame, window_size=10, num_of_std=5):
 def ichimoku_cloud_trace(df: DataFrame):
   # Tenkan-sen (Conversion Line): (9-period high + 9-period low)/2))
   period9_high = df['high'].rolling(window=9, min_periods=1).max()
-  period9_low = df['low'].rolling(window=9).min()
+  period9_low = df['low'].rolling(window=9, min_periods=1).min()
   tenkan_sen = (period9_high + period9_low) / 2
 
   # Kijun-sen (Base Line): (26-period high + 26-period low)/2))
@@ -468,7 +486,10 @@ def display_candlestick_by_pair(label, json_value, studies, timeframe, *_):
 @app.callback([
     Output("intermediate-pair-value-json", "data"),
     Output("prev-index-time", "data"),
-    Output("latest-price", "data")
+    Output("latest-price", "data"),
+    Output("ask-bid-pair", "children"),
+    Output("ask-price", "children"),
+    Output("bid-price", "children"),
 ], [
     Input("chart-interval", "n_intervals"),
     State("intermediate-pair", "data"),
@@ -476,7 +497,7 @@ def display_candlestick_by_pair(label, json_value, studies, timeframe, *_):
 ])
 def live_update_pair(n, pair, prev_time):
   if (n == 0):
-    return dash.no_update, dash.no_update, dash.no_update
+    return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update
   kraken_data = kraken_utils.queryByPair(limit=6000,
                                          pair=pair,
                                          col_order="datetime",
@@ -484,12 +505,16 @@ def live_update_pair(n, pair, prev_time):
                                          to_dataframe=False)
   if (prev_time is not None):
     if (datetime.fromisoformat(str(prev_time)) == kraken_data[0]['datetime']):
-      return dash.no_update, prev_time, dash.no_update
+      return dash.no_update, prev_time, dash.no_update, dash.no_update, dash.no_update, dash.no_update
   print("Kraken Live Update {} of iteration no.".format(pair), n)
+  prev_time = kraken_data[0]['datetime']
   last_price = kraken_data[0]['closed_value']
+  last_ask_price = kraken_data[0]['ask_value']
+  last_bid_price = kraken_data[0]['bid_value']
   # print(kraken_data)
-  return json.dumps(kraken_data,
-                    default=str), kraken_data[0]['datetime'], last_price
+  return json.dumps(
+      kraken_data,
+      default=str), prev_time, last_price, pair, last_ask_price, last_bid_price
 
 
 app.clientside_callback(

@@ -9,6 +9,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
+      PYTHONUNBUFFERED: 1
       CASSANDRA_HOST: cassandradb
       CASSANDRA_KEYSPACE: kafkapipeline
       WEATHER_TABLE: weatherreport
@@ -16,6 +17,7 @@ services:
       FAKER_TABLE: fakerdata
       KRAKEN_TABLE: kraken_tick_data
       CRYPTOPANIC_TABLE: cryptopanic_news
+      ANALYSIS_REPORT_TABLE: analysis_report
     ports:
       - 8050:8050
     restart: unless-stopped
