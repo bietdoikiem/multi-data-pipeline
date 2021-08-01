@@ -42,9 +42,15 @@ OpenWeatherMap API: https://openweathermap.org/api
 
 After obtaining the API keys, please update the files "twitter-producer/twitter_service.cfg" and "owm-producer/openweathermap_service.cfg" accordingly.
 
-Now, a little script has been made for the automation of running the project more efficiently
+After ensuring the API, please remember to create virtual environment for each python sub-project in order to modify and do any related stuff
 
-Let's open the terminal and type in the following bash script. Please make sure to be in the root directory of the project!
+For example:
+
+```python
+python -m venv ./dash-app
+```
+
+Now to the execution, a little script has been made for the automation of running the project more efficiently. Let's open the terminal and type in the following bash script. Please make sure to be in the root directory of the project!
 
 ```bash
 ./run.sh [start|build|clean|bash]
