@@ -8,7 +8,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
 from maindash import app
-from pages import kraken, analysis, twitter
+from pages import kraken, analysis, twitter, wc_analysis_dynamic
 
 # app = dash.Dash(__name__,external_stylesheets=[dbc.themes.BOOTSTRAP])
 
@@ -21,7 +21,7 @@ content = html.Div(id='page-content', style=CONTENT_STYLE)
 # Horizontal Navbar
 navbar = dbc.NavbarSimple(
     children=[
-        dbc.NavItem(dbc.NavLink("KrakenOHLC", href="/kraken"),
+        dbc.NavItem(dbc.NavLink("Kraken", href="/kraken"),
                     className="navlink-item"),
     # dbc.NavItem(dbc.NavLink("Twitter", href="/twitter")),
         dbc.NavItem(dbc.NavLink("Analysis", href="/analysis")),
@@ -45,13 +45,16 @@ def make_layout():
 
 # Route navigation callback
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
-def render_page_content(pathname):
+def render_page_content(pathname: str):
   if pathname == "/" or pathname == "/kraken":
     return kraken.render_kraken()
   elif pathname == "/twitter":
     return twitter.render_twitter()
   elif pathname == "/analysis":
     return analysis.render_analysis()
+  elif pathname.startswith("/analysis/wordcloud/"):
+    id = pathname.split('/')[-1]
+    return wc_analysis_dynamic.render_wc_analysis(id)
   # If the user tries to navigate to invalid page, return a 404 message
   return dbc.Jumbotron([
       html.H1("404: Not found", className="text-danger"),

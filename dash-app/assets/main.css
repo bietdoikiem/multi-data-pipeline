@@ -48,6 +48,19 @@
 	color: #959faa;
 }
 
+.history-btn {
+	display: "block";
+	margin-bottom: 5px;
+}
+
+#history-list-container > a {
+	text-decoration: none !important;
+	color: #f0f0f0;
+}
+#history-list-container > a:hover {
+	text-decoration: none !important;
+	color: #959faa;
+}
 input[type="checkbox"],
 input[type="radio"] {
 	box-sizing: border-box;

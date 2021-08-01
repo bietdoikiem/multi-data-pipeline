@@ -7,6 +7,7 @@ from cassandra.cluster import Cluster
 from cassandra.query import ordered_dict_factory
 import enum
 from abc import ABC
+from datetime import datetime
 
 CASSANDRA_HOST = os.environ.get("CASSANDRA_HOST") if os.environ.get(
     "CASSANDRA_HOST") else "localhost"
@@ -16,6 +17,9 @@ KRAKEN_TABLE = os.environ.get("KRAKEN_TABLE") if os.environ.get(
     "KRAKEN_TABLE") else "kraken_tick_data"
 CRYPTOPANIC_TABLE = os.environ.get("CRYPTOPANIC_TABLE") if os.environ.get(
     "CRYPTOPANIC_TABLE") else "cryptopanic_news"
+ANALYSIS_REPORT_TABLE = os.environ.get(
+    "ANALYSIS_REPORT_TABLE") if os.environ.get(
+        "ANALYSIS_REPORT_TABLE") else "analysis_report"
 
 
 class SortingType(str, enum.Enum):
@@ -76,8 +80,7 @@ class KrakenQueryUtils(QueryUtils):
                   cursor=None,
                   col_cursor=None,
                   col_order=None,
-                  to_dataframe=False,
-                  to_json=False):
+                  to_dataframe=False):
     # Setup cassandra connection and query type
     self.session.row_factory = ordered_dict_factory
     # Check condition if sort
@@ -116,7 +119,7 @@ class CryptoPanicQueryUtils(QueryUtils):
             col_cursor=None,
             col_order=None,
             to_dataframe=False,
-            categories=["news"]):
+            categories=["wordcloud"]):
     # Setup cassandra connection and query type
     self.session.row_factory = ordered_dict_factory
     # Check condition if sort
@@ -127,7 +130,7 @@ class CryptoPanicQueryUtils(QueryUtils):
     SELECT * 
     FROM {self.table}
     {"WHERE kind IN({}) ".format(", ".join([dollar_quote(c) for c in categories])) if cursor == None else ""}    
-    {"WHERE kind IN('news') AND {} <= {}".format(col_cursor, cursor) if cursor != None else ""}
+    {"WHERE kind IN({}) AND {} <= {}".format(", ".join([dollar_quote(c) for c in categories]), col_cursor, cursor) if cursor != None else ""}
     {"ORDER BY {} {}".format(col_order, sort) if col_order != None and sort != None else ""}
     {"LIMIT {}".format(limit) if limit != None else ""}
     ;
@@ -143,5 +146,78 @@ class CryptoPanicQueryUtils(QueryUtils):
     return [dict(row) for row in rows.all()]
 
 
+class AnalysisQueryUtils(QueryUtils):
+
+  def __init__(self, table: str = ANALYSIS_REPORT_TABLE):
+    super().__init__(table)
+
+  def query(self,
+            limit=None,
+            sort: SortingType = None,
+            cursor=None,
+            col_cursor=None,
+            col_order=None,
+            to_dataframe=False,
+            categories=["wordcloud"]):
+    # Setup cassandra connection and query type
+    self.session.row_factory = ordered_dict_factory
+    # Check condition if sort
+    if (sort != None and col_order == None):
+      raise Exception("Column used for sorting order is empty, please specify!")
+    # Query statement
+    CQL_QUERY = f"""
+    SELECT * 
+    FROM {self.table}
+    {"WHERE category IN({}) ".format(", ".join([dollar_quote(c) for c in categories])) if cursor == None else ""}    
+    {"WHERE category IN({}) AND {} <= {}".format(", ".join([dollar_quote(c) for c in categories]), col_cursor, cursor) if cursor != None else ""}
+    {"ORDER BY {} {}".format(col_order, sort) if col_order != None and sort != None else ""}
+    {"LIMIT {}".format(limit) if limit != None else ""}
+    ;
+    """
+    future = self.session.execute_async(CQL_QUERY)
+    try:
+      rows = future.result()
+    except Exception:
+      print("Operation failed!")
+    if (to_dataframe == True):
+      return pd.DataFrame(rows)
+    # rows = self.session.execute(CQL_QUERY)
+    return [dict(row) for row in rows.all()]
+
+  def insert_one(self, data: dict = None):
+    if (data is None):
+      raise "Please provide the insert data for Analysis Report!"
+    # Setup cassandra connection and query type
+    self.session.row_factory = ordered_dict_factory
+    CQL_INSERT = """
+    INSERT INTO analysis_report(datetime, category, analysis, url)
+    VALUES (%(datetime)s, %(category)s, %(analysis)s, %(url)s)
+    """
+    # Execute
+    future = self.session.execute_async(CQL_INSERT, data)
+    try:
+      result = future.result()
+    except Exception as error:
+      print("Operation failed!")
+      print(error)
+      return False
+    return True
+
+  def query_one_by_timestamp(self, key, category="wordcloud"):
+    # Setup cassandra connection and query type
+    self.session.row_factory = ordered_dict_factory
+    # Check condition if sort
+    # Query statement
+    CQL_QUERY = f"""
+    SELECT * 
+    FROM {self.table}
+    WHERE category = '{category}' AND datetime = '{key}'
+    ;
+    """
+    rows = self.session.execute(CQL_QUERY)
+    return [dict(row) for row in rows.all()]
+
+
 def dollar_quote(string):
   return "$${}$$".format(string)
+

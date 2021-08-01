@@ -15,7 +15,7 @@ start() {
   # -- Run Cassandra container
   echo "Setting up Cassandra service... ⏳︎"
   docker-compose -f cassandra/docker-compose.yml up -d
-  progress-bar 12
+  progress-bar 14
   echo "=> Cassandra launched! ✅"
 
   # -- Run Kafka container
@@ -222,6 +222,10 @@ execute() {
     clean)
       clean
       ;;
+    bash)
+      # shellcheck disable=SC1091
+      source ./container-bash.sh
+      ;;
     *)
       err "invalid task: ${task}"
       usage
@@ -235,7 +239,7 @@ err() {
 }
 
 usage() {
-    err "$(basename "$0"): [start|build|clean]"
+    err "$(basename "$0"): [start|build|clean|bash]"
 }
 
 # import progress-bar function
