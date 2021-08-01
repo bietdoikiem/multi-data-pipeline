@@ -2,6 +2,7 @@
 	"python.linting.pylintEnabled": true,
 	"python.linting.enabled": true,
 	"cSpell.words": [
+		"CQLSH",
 		"Ichimoku",
 		"Kijun",
 		"OLAP",
@@ -15,6 +16,7 @@
 		"cassandrautils",
 		"chikou",
 		"cqlquery",
+		"cryptopanic",
 		"gaierror",
 		"ipywidgets",
 		"numpy",
