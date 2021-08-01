@@ -251,7 +251,7 @@ def chart_factory(df: DataFrame,
 
 #### Kraken Utility functions & callbacks ####
 # Technical Indicators #
-def moving_average_trace(df: DataFrame, window_size=5):
+def moving_average_trace(df: DataFrame, window_size=7):
   return go.Scatter(x=df.index,
                     y=df['close'].rolling(window_size, min_periods=1).mean(),
                     showlegend=False,
@@ -259,10 +259,10 @@ def moving_average_trace(df: DataFrame, window_size=5):
                     line=dict(color='#FFD580', width=1))
 
 
-def exponential_moving_average_trace(df: DataFrame, window_size=20):
+def exponential_moving_average_trace(df: DataFrame, window_size=21):
   return go.Scatter(x=df.index,
                     y=df['close'].ewm(span=window_size,
-                                      min_periods=0,
+                                      min_periods=1,
                                       adjust=False,
                                       ignore_na=False).mean(),
                     showlegend=False,
@@ -271,7 +271,7 @@ def exponential_moving_average_trace(df: DataFrame, window_size=20):
 
 
 # Bollinger Bands
-def bollinger_trace(df: DataFrame, window_size=10, num_of_std=5):
+def bollinger_trace(df: DataFrame, window_size=20, num_of_std=2):
   price = df["close"]
   rolling_mean = price.rolling(window=window_size, min_periods=1).mean()
   rolling_std = price.rolling(window=window_size, min_periods=1).std()

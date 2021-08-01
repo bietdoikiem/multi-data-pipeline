@@ -18,6 +18,9 @@ services:
       KRAKEN_TABLE: kraken_tick_data
       CRYPTOPANIC_TABLE: cryptopanic_news
       ANALYSIS_REPORT_TABLE: analysis_report
+      AWS_ACCESS_KEY_ID: AKIAQ2FYKVTRUX4ZEOPP
+      AWS_SECRET_ACCESS_KEY: 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
+      AWS_DEFAULT_REGION: us-east-2
     ports:
       - 8050:8050
     restart: unless-stopped
